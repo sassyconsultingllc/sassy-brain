@@ -569,7 +569,9 @@
         <select id="pref-grokModel" onchange="savePref('grokModel', this.value)">
           <option value="grok-3">Grok 3</option>
           <option value="grok-3-fast">Grok 3 Fast</option>
-          <option value="grok-4-heavy">Grok 4 Heavy</option>
+          <option value="grok-code-fast-1">Grok Code Fast 1</option>
+          <option value="grok-4-1-fast-reasoning">Grok 4.1 Fast (Reasoning)</option>
+          <option value="grok-4-1-fast-non-reasoning">Grok 4.1 Fast (Non-Reasoning)</option>
         </select>
       </div>
       <div class="setting-row">
@@ -578,6 +580,13 @@
           <option value="1">1 round</option>
           <option value="2">2 rounds (default)</option>
           <option value="3">3 rounds</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Grok Code Execution<small>Let Grok run Python code in responses</small></div>
+        <select id="pref-codeExecution" onchange="savePref('codeExecution', this.value === 'true')">
+          <option value="true">Enabled</option>
+          <option value="false">Disabled</option>
         </select>
       </div>
       <div class="setting-row">
@@ -616,6 +625,7 @@ async function init() {
   if (prefs.grokModel) document.getElementById('pref-grokModel').value = prefs.grokModel;
   if (prefs.consensusTurns) document.getElementById('pref-consensusTurns').value = prefs.consensusTurns;
   if (prefs.steeringAction) document.getElementById('pref-steeringAction').value = prefs.steeringAction;
+  if (prefs.codeExecution !== undefined) document.getElementById('pref-codeExecution').value = String(prefs.codeExecution);
   if (prefs.defaultMode) { currentMode = prefs.defaultMode; setMode(currentMode); }
 
   // Set up chunk listener

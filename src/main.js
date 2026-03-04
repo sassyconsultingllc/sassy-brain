@@ -33,10 +33,11 @@ const store = new Store({
       properties: {
         consensusTurns: { type: 'number', default: 2 },
         claudeModel: { type: 'string', default: 'claude-sonnet-4-20250514' },
-        grokModel: { type: 'string', default: 'grok-3' },
+        grokModel: { type: 'string', default: 'grok-code-fast-1' },
         theme: { type: 'string', default: 'system' },
         defaultMode: { type: 'string', default: 'consensus' },
-        steeringAction: { type: 'string', default: 'steer' }
+        steeringAction: { type: 'string', default: 'steer' },
+        codeExecution: { type: 'boolean', default: true }
       },
       default: {}
     }
@@ -250,11 +251,20 @@ ipcMain.handle('ai:stream', async (event, { provider, messages, model, signal_id
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     };
-    body = JSON.stringify({
-      model: model || prefs.grokModel || 'grok-3',
+
+    const grokModel = model || prefs.grokModel || 'grok-code-fast-1';
+    const grokBody = {
+      model: grokModel,
       stream: true,
       messages
-    });
+    };
+
+    // Add code_interpreter tool for models that support it
+    if (prefs.codeExecution !== false) {
+      grokBody.tools = [{ type: 'function', function: { name: 'code_interpreter', description: 'Execute Python code', parameters: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } } }];
+    }
+
+    body = JSON.stringify(grokBody);
   } else {
     return { error: `Unknown provider: ${provider}` };
   }
@@ -345,7 +355,7 @@ ipcMain.handle('ai:complete', async (_, { provider, messages, model }) => {
       'Authorization': `Bearer ${keys.grok}`
     };
     body = JSON.stringify({
-      model: model || prefs.grokModel || 'grok-3',
+      model: model || prefs.grokModel || 'grok-code-fast-1',
       messages
     });
   }
