@@ -1,0 +1,10 @@
+node_modules/
+build/
+dist/
+*.exe
+*.msi
+*.AppImage
+*.deb
+*.rpm
+.env
+*.log
