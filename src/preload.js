@@ -1,11 +1,14 @@
 /**
- * Sassy Brain — Preload (context bridge)
+ * Sassy Brain — Preload (context bridge) v0.2.0
  * Secure IPC bridge. No node in renderer.
  */
 
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('sassy', {
+  providers: {
+    list: () => ipcRenderer.invoke('providers:list')
+  },
   keys: {
     get: () => ipcRenderer.invoke('keys:get'),
     has: () => ipcRenderer.invoke('keys:has'),
