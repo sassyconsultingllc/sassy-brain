@@ -1,0 +1,59 @@
+{
+  "ai_systems": {
+    "chatgpt": {
+      "enabled": true,
+      "api_key": "OPENAI_API_KEY",
+      "organization_id": "OPENAI_ORG_ID",
+      "api_endpoint": "https://api.openai.com/v1",
+      "notes": "Set environment variable OPENAI_API_KEY. Get your API key from https://platform.openai.com/api-keys"
+    },
+    "gemini": {
+      "enabled": true,
+      "api_key": "GEMINI_API_KEY",
+      "api_endpoint": "https://generativelanguage.googleapis.com/v1beta",
+      "notes": "Set environment variable GEMINI_API_KEY. Get your API key from https://makersuite.google.com/app/apikey"
+    },
+    "perplexity": {
+      "enabled": true,
+      "api_key": "PERPLEXITY_API_KEY",
+      "api_endpoint": "https://api.perplexity.ai",
+      "notes": "Set environment variable PERPLEXITY_API_KEY. Get your API key from https://www.perplexity.ai/settings/api"
+    },
+    "anthropic": {
+      "enabled": true,
+      "api_key": "ANTHROPIC_API_KEY",
+      "api_endpoint": "https://api.anthropic.com/v1",
+      "model": "claude-sonnet-4-20250514",
+      "max_tokens": 4096,
+      "notes": "Set environment variable ANTHROPIC_API_KEY. Get your API key from https://console.anthropic.com/settings/keys"
+    },
+    "grok": {
+      "enabled": true,
+      "api_key": "GROK_API_KEY",
+      "api_endpoint": "https://api.x.ai/v1",
+      "notes": "Set environment variable GROK_API_KEY. Get your API key from https://console.x.ai/"
+    },
+    "manus": {
+      "enabled": true,
+      "api_key": "MANUS_API_KEY",
+      "api_endpoint": "https://api.manus.im/v1",
+      "notes": "Set environment variable MANUS_API_KEY. Manus browser automation conversations"
+    }
+  },
+  "import_preferences": {
+    "chunk_long_conversations": true,
+    "chunk_size": 50000,
+    "create_separate_attachments": true,
+    "preserve_full_context": true,
+    "preserve_timestamps": true,
+    "extract_code_blocks": true,
+    "highlight_unresolved_items": true,
+    "include_conversation_map": true
+  },
+  "security": {
+    "config_version": "2.0",
+    "last_updated": "2025-01-04",
+    "warning": "API keys are loaded from Windows environment variables. Never commit actual keys to version control.",
+    "setup_instructions": "Set environment variables using: setx OPENAI_API_KEY \"your-key-here\" (requires restart) or System Properties > Environment Variables for permanent setup"
+  }
+}
