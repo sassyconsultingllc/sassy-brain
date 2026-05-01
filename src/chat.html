@@ -10,6 +10,7 @@
     :root {
       --bg: #09090b; --surface: #18181b; --surface2: #27272a; --surface3: #3f3f46;
       --border: #3f3f46; --text: #fafafa; --text2: #a1a1aa; --text3: #71717a;
+<<<<<<< HEAD
       --accent: #f97316; --accent2: #ea580c;
       --green: #22c55e; --red: #ef4444; --blue: #3b82f6; --purple: #a855f7;
       --slot-a: #d97706; --slot-b: #3b82f6;
@@ -234,10 +235,162 @@
     .prompt-hint {
       font-family: var(--mono); font-size: 10px;
       color: var(--text3); margin-top: 6px;
+=======
+      --accent: #f97316; --accent2: #ea580c; --green: #22c55e; --red: #ef4444;
+      --blue: #3b82f6; --purple: #a855f7; --consensus: #22c55e; --radius: 12px;
+      --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
     }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── Top bar ─── */
+    .topbar {
+      height: 44px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 16px; -webkit-app-region: drag; flex-shrink: 0; gap: 10px;
+    }
+    .topbar-logo { font-family: var(--mono); font-weight: 700; font-size: 14px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .topbar-mode { -webkit-app-region: no-drag; display: flex; gap: 2px; background: var(--bg); border-radius: 8px; padding: 2px; }
+    .mode-btn { padding: 4px 10px; border: none; background: transparent; color: var(--text2); font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; font-family: var(--mono); transition: all 0.2s; white-space: nowrap; }
+    .mode-btn.active { background: var(--surface2); color: var(--text); }
+    .mode-btn:hover:not(.active) { color: var(--text); }
+    .topbar-spacer { flex: 1; }
+    .topbar-btn { -webkit-app-region: no-drag; background: none; border: none; color: var(--text2); cursor: pointer; font-size: 16px; padding: 4px 8px; transition: color 0.2s; }
+    .topbar-btn:hover { color: var(--text); }
+
+    /* ── Status bar ─── */
+    .statusbar {
+      height: 28px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 16px; gap: 16px; flex-shrink: 0; overflow-x: auto;
+    }
+    .status-item { display: flex; align-items: center; gap: 5px; font-size: 10px; font-family: var(--mono); color: var(--text3); white-space: nowrap; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Chat area ─── */
+    .chat-container { flex: 1; overflow-y: auto; padding: 20px 24px; scroll-behavior: smooth; }
+    .chat-container::-webkit-scrollbar { width: 6px; }
+    .chat-container::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+
+    .msg { margin-bottom: 16px; max-width: 85%; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-user { margin-left: auto; }
+    .msg-ai { margin-right: auto; }
+    .msg-system { margin: 0 auto; text-align: center; }
+
+    .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 10px; font-family: var(--mono); color: var(--text3); }
+    .msg-provider-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    .msg-bubble {
+      padding: 12px 16px; border-radius: var(--radius); font-size: 14px; line-height: 1.6;
+      word-wrap: break-word; overflow-wrap: break-word;
+    }
+    .msg-user .msg-bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+    .msg-ai .msg-bubble { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .msg-system .msg-bubble { background: transparent; color: var(--text3); font-size: 12px; font-family: var(--mono); }
+    .msg-bubble code { background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 13px; }
+    .msg-bubble pre { background: var(--bg); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
+    .msg-bubble pre code { background: none; padding: 0; font-size: 12px; }
+
+    /* ── Debate panel ─── */
+    .debate-panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      margin-bottom: 16px; overflow: hidden;
+    }
+    .debate-header {
+      display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+      background: var(--bg); font-size: 11px; font-family: var(--mono); color: var(--text2);
+      border-bottom: 1px solid var(--border); cursor: pointer;
+    }
+    .debate-header:hover { color: var(--text); }
+    .debate-body { display: flex; gap: 1px; background: var(--border); max-height: 200px; transition: max-height 0.3s; overflow: hidden; }
+    .debate-body.collapsed { max-height: 0; }
+    .debate-col { flex: 1; background: var(--surface); padding: 10px; overflow-y: auto; }
+    .debate-col-header { font-size: 10px; font-family: var(--mono); font-weight: 600; margin-bottom: 6px; }
+    .debate-col-text { font-size: 11px; color: var(--text2); line-height: 1.5; white-space: pre-wrap; }
+
+    /* ── Queue ─── */
+    .queue-area { padding: 0 24px; }
+    .queue-item { display: flex; align-items: center; gap: 8px; padding: 4px 10px; background: var(--surface); border-radius: 6px; margin-bottom: 4px; font-size: 11px; }
+    .queue-badge { font-family: var(--mono); color: var(--accent); font-weight: 600; font-size: 10px; }
+    .queue-text { flex: 1; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .queue-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 12px; }
+
+    /* ── Input area ─── */
+    .input-area {
+      padding: 12px 24px 16px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+    .input-row { display: flex; gap: 8px; align-items: flex-end; }
+    textarea {
+      flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 14px; color: var(--text); font-family: var(--font); font-size: 14px;
+      resize: none; outline: none; min-height: 42px; max-height: 200px; line-height: 1.5;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--text3); }
+
+    .send-group { display: flex; gap: 2px; }
+    .btn-send {
+      padding: 10px 20px; background: var(--accent); border: none; border-radius: 10px 0 0 10px;
+      color: white; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-send:hover { background: var(--accent2); }
+    .btn-dropdown {
+      padding: 10px 8px; background: var(--accent); border: none; border-radius: 0 10px 10px 0;
+      color: white; cursor: pointer; font-size: 10px; border-left: 1px solid rgba(255,255,255,0.2);
+    }
+    .dropdown-menu {
+      display: none; position: absolute; bottom: 100%; right: 0; margin-bottom: 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; min-width: 140px; z-index: 100;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-item {
+      padding: 8px 14px; font-size: 12px; cursor: pointer; transition: background 0.1s;
+      font-family: var(--mono); color: var(--text2);
+    }
+    .dropdown-item:hover { background: var(--surface2); color: var(--text); }
+    .send-group { position: relative; }
+
+    /* ── Settings overlay ─── */
+    .settings-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center;
+    }
+    .settings-overlay.show { display: flex; }
+    .settings-panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; width: 480px; max-height: 80vh; overflow-y: auto;
+    }
+    .settings-title { font-family: var(--mono); font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .setting-label { font-size: 13px; color: var(--text2); }
+    .setting-value select, .setting-value input {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 4px 8px; color: var(--text); font-family: var(--mono); font-size: 12px; outline: none;
+    }
+    .settings-close {
+      margin-top: 16px; width: 100%; padding: 10px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+      cursor: pointer; font-weight: 600; font-size: 13px;
+    }
+
+    /* ── Consensus provider picker ─── */
+    .consensus-picker { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .cp-chip {
+      display: flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px;
+      font-size: 10px; font-family: var(--mono); font-weight: 600; cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text2); transition: all 0.2s;
+>>>>>>> 318d9216faff51c5a9e0eebbccb6aa7ec9e205b9
+    }
+    .cp-chip.selected { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
+    .cp-chip.disabled { opacity: 0.3; cursor: not-allowed; }
+    .cp-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    .streaming-cursor { display: inline-block; width: 2px; height: 14px; background: var(--accent); animation: blink 0.8s infinite; vertical-align: middle; margin-left: 2px; }
+    @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
   </style>
 </head>
 <body>
+<<<<<<< HEAD
   <div class="topbar">
     <div class="topbar-logo">SASSY BRAIN</div>
     <div class="topbar-ver" id="ver"></div>
@@ -272,10 +425,44 @@
         <input id="model-b" placeholder="model" list="models-b" spellcheck="false">
         <datalist id="models-b"></datalist>
         <button class="btn-overlay" id="overlay-btn-b" onclick="toggleOverlay('b')">{ JSON }</button>
+=======
+  <!-- Top bar -->
+  <div class="topbar">
+    <span class="topbar-logo">SASSY BRAIN</span>
+    <div class="topbar-mode" id="mode-bar"></div>
+    <span class="topbar-spacer"></span>
+    <button class="topbar-btn" onclick="newChat()" title="New Chat">+</button>
+    <button class="topbar-btn" onclick="toggleSettings()" title="Settings">⚙</button>
+    <button class="topbar-btn" onclick="window.sassy.nav.toSetup()" title="API Keys">🔑</button>
+  </div>
+
+  <!-- Status bar -->
+  <div class="statusbar" id="status-bar"></div>
+
+  <!-- Chat -->
+  <div class="chat-container" id="chat-area"></div>
+
+  <!-- Queue -->
+  <div class="queue-area" id="queue-area"></div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="input" rows="1" placeholder="Ask anything..." oninput="autoResize(this)"></textarea>
+      <div class="send-group">
+        <button class="btn-send" id="btn-send" onclick="handleSend()">Send</button>
+        <button class="btn-dropdown" id="btn-dropdown" onclick="toggleDropdown()">▾</button>
+        <div class="dropdown-menu" id="dropdown-menu">
+          <div class="dropdown-item" onclick="setSendMode('send'); closeDropdown()">Send (new message)</div>
+          <div class="dropdown-item" onclick="setSendMode('steer'); closeDropdown()">Steer (redirect)</div>
+          <div class="dropdown-item" onclick="setSendMode('stop'); closeDropdown()">Stop & Send</div>
+        </div>
+>>>>>>> 318d9216faff51c5a9e0eebbccb6aa7ec9e205b9
       </div>
     </div>
   </div>
 
+<<<<<<< HEAD
   <!-- Overlay editors (hidden until toggled) -->
   <div class="overlay-editor" id="overlay-a">
     <div class="oe-hint">
@@ -323,10 +510,19 @@
     </div>
     <div class="prompt-hint" id="hint">
       ready
+=======
+  <!-- Settings overlay -->
+  <div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)toggleSettings()">
+    <div class="settings-panel">
+      <div class="settings-title">Settings</div>
+      <div id="settings-content"></div>
+      <button class="settings-close" onclick="toggleSettings()">Close</button>
+>>>>>>> 318d9216faff51c5a9e0eebbccb6aa7ec9e205b9
     </div>
   </div>
 
 <script>
+<<<<<<< HEAD
 // ═══════════════════════════════════════════════════════════════════
 // Sassy Brain — renderer (dev testing tool)
 // ═══════════════════════════════════════════════════════════════════
@@ -354,6 +550,427 @@ function renderMarkdown(text) {
   // escape FIRST so AI output cannot inject tags; then synth our own.
   const esc = escapeHtml(text);
   return esc
+=======
+// ── State ──────────────────────────────────────────────────────
+let providers = {};
+let availableProviders = []; // providers with keys
+let currentMode = 'consensus'; // consensus | single provider id
+let singleProvider = null;
+let chatHistory = [];
+let streamBuffers = {};
+let activeSignals = new Set();
+let isStreaming = false;
+let signalCounter = 0;
+let messageQueue = [];
+let sendMode = 'send';
+let consensusProviders = [];
+
+const PROVIDER_COLORS = {};
+
+// ── Init ───────────────────────────────────────────────────────
+async function init() {
+  providers = await window.sassy.providers.list();
+  const hasKeys = await window.sassy.keys.has();
+  const prefs = await window.sassy.prefs.get();
+
+  // Build available providers list
+  availableProviders = Object.keys(providers).filter(p => hasKeys[p]);
+
+  // Store colors
+  for (const [id, p] of Object.entries(providers)) PROVIDER_COLORS[id] = p.color;
+  PROVIDER_COLORS.consensus = '#22c55e';
+
+  // Load consensus provider preferences
+  consensusProviders = prefs.consensusProviders || [];
+  // Filter to only available providers
+  consensusProviders = consensusProviders.filter(p => availableProviders.includes(p));
+  // Default: pick first 2 available
+  if (consensusProviders.length < 2 && availableProviders.length >= 2) {
+    consensusProviders = availableProviders.slice(0, 2);
+    await window.sassy.prefs.set('consensusProviders', consensusProviders);
+  }
+
+  // Set default mode
+  if (availableProviders.length >= 2) {
+    currentMode = 'consensus';
+  } else if (availableProviders.length === 1) {
+    currentMode = availableProviders[0];
+    singleProvider = availableProviders[0];
+  }
+
+  buildModeBar();
+  buildStatusBar();
+  buildSettings();
+  setupListeners();
+
+  addSystemMessage(`Sassy Brain v0.2.0 — ${availableProviders.length} provider${availableProviders.length !== 1 ? 's' : ''} active`);
+}
+
+function buildModeBar() {
+  const bar = document.getElementById('mode-bar');
+  let html = '';
+
+  // Consensus button (only if 2+ providers)
+  if (availableProviders.length >= 2) {
+    html += `<button class="mode-btn ${currentMode === 'consensus' ? 'active' : ''}" onclick="switchMode('consensus')">⚡ Consensus</button>`;
+  }
+
+  // Individual provider buttons
+  for (const id of availableProviders) {
+    const active = currentMode === id ? 'active' : '';
+    html += `<button class="mode-btn ${active}" onclick="switchMode('${id}')" style="${currentMode === id ? `color:${PROVIDER_COLORS[id]}` : ''}">${providers[id].name}</button>`;
+  }
+
+  bar.innerHTML = html;
+}
+
+function buildStatusBar() {
+  const bar = document.getElementById('status-bar');
+  let html = '';
+  for (const id of availableProviders) {
+    html += `<div class="status-item"><div class="status-dot" style="background:${PROVIDER_COLORS[id]}"></div><span>${providers[id].name}</span><span id="status-${id}-text" style="color:var(--text3)">idle</span></div>`;
+  }
+  bar.innerHTML = html;
+}
+
+function buildSettings() {
+  const container = document.getElementById('settings-content');
+  let html = '';
+
+  // Model selectors for each provider
+  for (const id of availableProviders) {
+    const p = providers[id];
+    html += `<div class="setting-row"><span class="setting-label">${p.name} Model</span><div class="setting-value"><select onchange="savePref('${id}Model', this.value)">`;
+    for (const m of p.models) {
+      html += `<option value="${m}">${m.split('/').pop()}</option>`;
+    }
+    html += `</select></div></div>`;
+  }
+
+  // Consensus turns
+  html += `<div class="setting-row"><span class="setting-label">Consensus Rounds</span><div class="setting-value"><select onchange="savePref('consensusTurns', parseInt(this.value))"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></div></div>`;
+
+  // Consensus provider picker
+  if (availableProviders.length >= 2) {
+    html += `<div class="setting-row" style="flex-direction:column;align-items:flex-start"><span class="setting-label">Consensus Participants (pick 2+)</span><div class="consensus-picker" id="consensus-picker">`;
+    for (const id of availableProviders) {
+      const selected = consensusProviders.includes(id) ? 'selected' : '';
+      html += `<div class="cp-chip ${selected}" data-provider="${id}" onclick="toggleConsensusProvider('${id}')"><div class="cp-dot" style="background:${PROVIDER_COLORS[id]}"></div>${providers[id].name}</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // Steering action
+  html += `<div class="setting-row"><span class="setting-label">While Streaming</span><div class="setting-value"><select onchange="savePref('steeringAction', this.value)"><option value="steer">Steer (redirect)</option><option value="queue">Queue</option><option value="stop">Stop & send</option></select></div></div>`;
+
+  container.innerHTML = html;
+}
+
+function toggleConsensusProvider(id) {
+  const idx = consensusProviders.indexOf(id);
+  if (idx >= 0) {
+    if (consensusProviders.length <= 2) return; // minimum 2
+    consensusProviders.splice(idx, 1);
+  } else {
+    consensusProviders.push(id);
+  }
+  window.sassy.prefs.set('consensusProviders', consensusProviders);
+
+  // Update chips
+  document.querySelectorAll('.cp-chip').forEach(chip => {
+    const p = chip.dataset.provider;
+    chip.classList.toggle('selected', consensusProviders.includes(p));
+  });
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  if (mode !== 'consensus') singleProvider = mode;
+  buildModeBar();
+}
+
+function setSendMode(mode) { sendMode = mode; }
+
+function setupListeners() {
+  window.sassy.ai.removeChunkListeners();
+  window.sassy.ai.removeDoneListeners();
+  window.sassy.ai.onChunk(({ signal_id, provider, text }) => {
+    if (!activeSignals.has(signal_id)) return;
+    streamBuffers[signal_id] = (streamBuffers[signal_id] || '') + text;
+    const el = document.getElementById(`stream-${signal_id}`);
+    if (el) {
+      el.innerHTML = renderMarkdown(streamBuffers[signal_id]) + '<span class="streaming-cursor"></span>';
+      scrollToBottom();
+    }
+  });
+  window.sassy.ai.onDone(({ signal_id, provider }) => {
+    activeSignals.delete(signal_id);
+    const el = document.getElementById(`stream-${signal_id}`);
+    if (el) {
+      el.innerHTML = renderMarkdown(streamBuffers[signal_id] || '');
+    }
+    setProviderStatus(provider, 'idle');
+    if (activeSignals.size === 0) {
+      isStreaming = false;
+      updateSendButton();
+      processQueue();
+    }
+  });
+}
+
+// ── Message rendering ──────────────────────────────────────────
+function addUserMessage(text) {
+  const area = document.getElementById('chat-area');
+  area.insertAdjacentHTML('beforeend', `<div class="msg msg-user"><div class="msg-bubble">${escapeHtml(text)}</div></div>`);
+  scrollToBottom();
+}
+
+function addSystemMessage(text) {
+  const area = document.getElementById('chat-area');
+  area.insertAdjacentHTML('beforeend', `<div class="msg msg-system"><div class="msg-bubble">${text}</div></div>`);
+  scrollToBottom();
+}
+
+function createStreamingMessage(signal_id, provider) {
+  const area = document.getElementById('chat-area');
+  const pName = provider === 'consensus' ? 'Consensus' : (providers[provider]?.name || provider);
+  const color = PROVIDER_COLORS[provider] || '#888';
+  area.insertAdjacentHTML('beforeend', `
+    <div class="msg msg-ai">
+      <div class="msg-header"><div class="msg-provider-dot" style="background:${color}"></div>${pName}</div>
+      <div class="msg-bubble" id="stream-${signal_id}"><span class="streaming-cursor"></span></div>
+    </div>`);
+  scrollToBottom();
+}
+
+function createDebatePanel() {
+  const area = document.getElementById('chat-area');
+  const cols = consensusProviders.map(id => `
+    <div class="debate-col">
+      <div class="debate-col-header" style="color:${PROVIDER_COLORS[id]}">${providers[id].name}</div>
+      <div class="debate-col-text" id="debate-${id}-text">waiting...</div>
+    </div>`).join('');
+
+  area.insertAdjacentHTML('beforeend', `
+    <div class="debate-panel" id="debate-active">
+      <div class="debate-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+        <span style="color:var(--accent)">⚡</span>
+        <span>Deliberating (${consensusProviders.length} providers)...</span>
+      </div>
+      <div class="debate-body">${cols}</div>
+    </div>`);
+  scrollToBottom();
+  return document.getElementById('debate-active');
+}
+
+// ── Send handling ──────────────────────────────────────────────
+function handleSend() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  autoResize(input);
+
+  if (!isStreaming || sendMode === 'send') {
+    sendMessage(text);
+    return;
+  }
+
+  switch (sendMode) {
+    case 'steer':
+      addUserMessage(`↪ ${text}`);
+      chatHistory.push({ role: 'user', content: `[STEERING] The user is redirecting: ${text}` });
+      messageQueue.unshift(text);
+      renderQueue();
+      break;
+    case 'stop':
+      activeSignals.clear();
+      isStreaming = false;
+      streamBuffers = {};
+      updateSendButton();
+      sendMessage(text);
+      break;
+  }
+}
+
+async function sendMessage(text) {
+  addUserMessage(text);
+  chatHistory.push({ role: 'user', content: text });
+  isStreaming = true;
+  updateSendButton();
+
+  if (currentMode === 'consensus' && consensusProviders.length >= 2) {
+    await runConsensus(text);
+  } else {
+    const provider = currentMode === 'consensus' ? availableProviders[0] : currentMode;
+    await runSingle(provider, text);
+  }
+}
+
+// ── Single-provider streaming ──────────────────────────────────
+async function runSingle(provider, text) {
+  const sid = `s${++signalCounter}`;
+  activeSignals.add(sid);
+  streamBuffers[sid] = '';
+
+  setProviderStatus(provider, 'streaming...');
+  createStreamingMessage(sid, provider);
+
+  const messages = chatHistory.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }));
+  const result = await window.sassy.ai.stream({ provider, messages, signal_id: sid });
+
+  if (result.error) {
+    addSystemMessage(`Error from ${providers[provider]?.name || provider}: ${result.error}`);
+    activeSignals.delete(sid);
+    isStreaming = false;
+    setProviderStatus(provider, 'error');
+    updateSendButton();
+    return;
+  }
+
+  await waitForSignal(sid);
+  if (streamBuffers[sid]) chatHistory.push({ role: 'assistant', content: streamBuffers[sid] });
+}
+
+// ── Consensus Engine ───────────────────────────────────────────
+async function runConsensus(text) {
+  const prefs = await window.sassy.prefs.get();
+  const turns = prefs.consensusTurns || 2;
+  const participants = consensusProviders;
+
+  participants.forEach(p => setProviderStatus(p, 'deliberating...'));
+  const debatePanel = createDebatePanel();
+
+  const systemPrompt = `You are participating in a consensus-finding process with other AIs. Provide the most accurate, helpful, truthful response. After seeing other perspectives, refine your answer incorporating valid points while maintaining intellectual honesty. If you disagree on facts, explain why with evidence.`;
+
+  // Round 1: All respond independently
+  let responses = {};
+  const r1Promises = participants.map(async (pid) => {
+    const msgs = pid === 'anthropic'
+      ? [{ role: 'user', content: text }]
+      : [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }];
+    const res = await window.sassy.ai.complete({ provider: pid, messages: msgs });
+    return { pid, text: res.text || res.error || '' };
+  });
+
+  const r1Results = await Promise.all(r1Promises);
+  for (const r of r1Results) { responses[r.pid] = r.text; updateDebateText(r.pid, r.text); }
+
+  // Deliberation rounds
+  for (let round = 1; round < turns; round++) {
+    updateDebateHeader(`Round ${round + 1}/${turns} — refining...`);
+
+    const roundPromises = participants.map(async (pid) => {
+      const otherResponses = participants.filter(p => p !== pid).map(p => `${providers[p].name}: "${responses[p]}"`).join('\n\n');
+      const msgs = pid === 'anthropic'
+        ? [
+            { role: 'user', content: text },
+            { role: 'assistant', content: responses[pid] },
+            { role: 'user', content: `Other AIs responded:\n\n${otherResponses}\n\nRefine your answer, incorporating valid points. Produce a final, authoritative response.` }
+          ]
+        : [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: text },
+            { role: 'assistant', content: responses[pid] },
+            { role: 'user', content: `Other AIs responded:\n\n${otherResponses}\n\nRefine your answer, incorporating valid points. Produce a final, authoritative response.` }
+          ];
+      const res = await window.sassy.ai.complete({ provider: pid, messages: msgs });
+      return { pid, text: res.text || responses[pid] };
+    });
+
+    const roundResults = await Promise.all(roundPromises);
+    for (const r of roundResults) { responses[r.pid] = r.text; updateDebateText(r.pid, r.text); }
+  }
+
+  // Final synthesis
+  updateDebateHeader('Synthesizing consensus...');
+
+  const positionsList = participants.map(p => `${providers[p].name}:\n${responses[p]}`).join('\n\n---\n\n');
+
+  const synthesisMessages = [{
+    role: 'user',
+    content: `Original question: "${text}"\n\n${positionsList}\n\nSynthesize all perspectives into a single, authoritative response. Where they agree, state consensus confidently. Where they differ, present both views with evidence strength. Be concise but thorough. Do NOT mention provider names — present unified truth.`
+  }];
+
+  // Pick strongest provider for synthesis (prefer anthropic)
+  const synthesizer = participants.includes('anthropic') ? 'anthropic' : participants[0];
+  const consSid = `cons${++signalCounter}`;
+  activeSignals.add(consSid);
+  streamBuffers[consSid] = '';
+
+  debatePanel.querySelector('.debate-header').innerHTML = `<span style="color:var(--green)">✓</span><span>Deliberation complete (${turns} rounds, ${participants.length} providers)</span>`;
+
+  createStreamingMessage(consSid, 'consensus');
+  setProviderStatus(synthesizer, 'synthesizing...');
+
+  await window.sassy.ai.stream({ provider: synthesizer, messages: synthesisMessages, signal_id: consSid });
+  await waitForSignal(consSid);
+
+  if (streamBuffers[consSid]) chatHistory.push({ role: 'assistant', content: streamBuffers[consSid] });
+
+  participants.forEach(p => setProviderStatus(p, 'idle'));
+  isStreaming = false;
+  updateSendButton();
+  processQueue();
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+function waitForSignal(sid) {
+  return new Promise(resolve => {
+    const check = setInterval(() => { if (!activeSignals.has(sid)) { clearInterval(check); resolve(); } }, 100);
+  });
+}
+
+function updateDebateText(provider, text) {
+  const el = document.getElementById(`debate-${provider}-text`);
+  if (el) { el.textContent = text.length > 500 ? text.substring(0, 500) + '...' : text; el.parentElement.scrollTop = el.parentElement.scrollHeight; }
+}
+
+function updateDebateHeader(text) {
+  const panel = document.getElementById('debate-active');
+  if (panel) { const span = panel.querySelector('.debate-header span:last-child'); if (span) span.textContent = text; }
+}
+
+function renderQueue() {
+  const area = document.getElementById('queue-area');
+  area.innerHTML = messageQueue.map((msg, i) => `<div class="queue-item"><span class="queue-badge">Q${i + 1}</span><span class="queue-text">${escapeHtml(msg.substring(0, 60))}${msg.length > 60 ? '...' : ''}</span><button class="queue-remove" onclick="removeFromQueue(${i})">✕</button></div>`).join('');
+}
+
+function removeFromQueue(i) { messageQueue.splice(i, 1); renderQueue(); }
+function processQueue() { if (messageQueue.length > 0 && !isStreaming) { const next = messageQueue.shift(); renderQueue(); sendMessage(next); } }
+
+function setProviderStatus(provider, status) {
+  const el = document.getElementById(`status-${provider}-text`);
+  if (el) el.textContent = status;
+}
+
+function updateSendButton() {
+  const btn = document.getElementById('btn-send');
+  btn.textContent = isStreaming ? '⟳' : 'Send';
+}
+
+function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('show'); }
+function closeDropdown() { document.getElementById('dropdown-menu').classList.remove('show'); }
+document.addEventListener('click', (e) => { if (!e.target.closest('.send-group')) closeDropdown(); });
+
+function toggleSettings() { document.getElementById('settings-overlay').classList.toggle('show'); }
+async function savePref(key, value) { await window.sassy.prefs.set(key, value); }
+
+function newChat() {
+  chatHistory = []; streamBuffers = {}; activeSignals.clear(); isStreaming = false; messageQueue = [];
+  document.getElementById('chat-area').innerHTML = '';
+  document.getElementById('queue-area').innerHTML = '';
+  updateSendButton();
+  addSystemMessage('New conversation started.');
+}
+
+function scrollToBottom() { const area = document.getElementById('chat-area'); area.scrollTop = area.scrollHeight; }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 200) + 'px'; }
+function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+
+function renderMarkdown(text) {
+  return text
+>>>>>>> 318d9216faff51c5a9e0eebbccb6aa7ec9e205b9
     .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -361,6 +978,7 @@ function renderMarkdown(text) {
     .replace(/\n/g, '<br>');
 }
 
+<<<<<<< HEAD
 function setStatus(slot, text, kind) {
   const el = $(`status-${slot}`);
   if (!el) return;
@@ -818,6 +1436,12 @@ async function init() {
   });
 }
 
+=======
+document.getElementById('input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+>>>>>>> 318d9216faff51c5a9e0eebbccb6aa7ec9e205b9
 init();
 </script>
 </body>

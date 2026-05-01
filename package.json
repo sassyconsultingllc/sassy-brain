@@ -1,7 +1,11 @@
 {
   "name": "sassy-brain",
   "version": "0.2.0",
+<<<<<<< HEAD
   "description": "Multi-AI consensus engine. Claude + Grok debate, you get truth. Now with system message support, provider-specific handling, improved error feedback, and overlay documentation. Built by Sassy Consulting LLC.",
+=======
+  "description": "Multi-AI consensus engine. 5 providers debate, you get truth. Built by Sassy Consulting LLC.",
+>>>>>>> 318d9216faff51c5a9e0eebbccb6aa7ec9e205b9
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
@@ -15,15 +19,7 @@
     "build-linux": "npx --yes electron-builder@latest --linux",
     "build-all": "npx --yes electron-builder@latest --win --x64 --linux"
   },
-  "keywords": [
-    "electron",
-    "ai",
-    "consensus",
-    "claude",
-    "grok",
-    "multi-model",
-    "sassy"
-  ],
+  "keywords": ["electron", "ai", "consensus", "claude", "grok", "gemini", "mistral", "huggingface", "multi-model", "sassy"],
   "author": "Sassy Consulting LLC <shane@sassyconsultingllc.com>",
   "license": "MIT",
   "type": "commonjs",
@@ -37,22 +33,10 @@
   "build": {
     "appId": "com.sassyconsulting.brain",
     "productName": "Sassy Brain",
-    "directories": {
-      "output": "build"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Network",
-      "icon": "build-resources/icons"
-    },
+    "directories": { "output": "build" },
+    "linux": { "target": ["AppImage", "deb"], "category": "Network", "icon": "build-resources/icons" },
     "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
+      "target": ["nsis", "portable"],
       "icon": "src/icon.ico",
       "forceCodeSigning": false,
       "artifactName": "SassyBrain_Archive-v${version}.${ext}"
@@ -65,9 +49,7 @@
       "shortcutName": "Sassy Brain",
       "artifactName": "SassyBrain_Installer-v${version}.exe"
     },
-    "portable": {
-      "artifactName": "SassyBrain_Portable-v${version}.exe"
-    },
+    "portable": { "artifactName": "SassyBrain_Portable-v${version}.exe" },
     "compression": "maximum",
     "asar": true,
     "files": [
