@@ -8,7 +8,7 @@
  */
 
 const readline = require('readline');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const os = require('os');
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -67,7 +67,9 @@ async function main() {
 
     if (os.platform() === 'win32') {
       try {
-        execSync(`setx ${key.envVar} "${value.trim()}"`, { stdio: 'pipe' });
+        // execFileSync with arg array — no shell interpolation, so a key
+        // value containing `" && malicious` cannot escape out.
+        execFileSync('setx', [key.envVar, value.trim()], { stdio: 'pipe' });
         console.log(`  ✓ Set ${key.envVar} (restart terminal to use)`);
       } catch (err) {
         console.log(`  ✗ Failed to set: ${err.message}`);

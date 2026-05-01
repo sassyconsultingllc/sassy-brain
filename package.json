@@ -1,7 +1,7 @@
 {
   "name": "sassy-brain",
-  "version": "0.1.0",
-  "description": "Multi-AI consensus engine. Claude + Grok debate, you get truth. Built by Sassy Consulting LLC.",
+  "version": "0.2.0",
+  "description": "Multi-AI consensus engine. Claude + Grok debate, you get truth. Now with system message support, provider-specific handling, improved error feedback, and overlay documentation. Built by Sassy Consulting LLC.",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",

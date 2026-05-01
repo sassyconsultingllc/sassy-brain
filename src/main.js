@@ -1,83 +1,134 @@
 /**
  * Sassy Brain — Main Process
- * Multi-AI consensus engine. Claude + Grok debate, you get truth.
- * 
- * Architecture derived from Grok-Desktop (AnRkey/Grok-Desktop, ISC License)
- * with substantial modifications for multi-model consensus, async steering,
- * and API-driven chat (not webview wrapper).
- * 
+ * Multi-provider AI testing tool for developers.
+ * Two slot UI: pick any provider + model per slot, run in parallel,
+ * with optional per-slot JSON overlay merged into every request body.
+ *
  * (c) 2026 Sassy Consulting LLC
  */
 
-const { app, BrowserWindow, shell, Menu, ipcMain, nativeTheme, session, dialog } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain, nativeTheme, dialog } = require('electron');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const Store = require('electron-store');
+const Providers = require('./providers');
 
-// ── Encrypted config store ──────────────────────────────────────────
-const store = new Store({
-  encryptionKey: 'sassy-brain-v1-' + os.hostname(),
-  schema: {
-    keys: {
-      type: 'object',
-      properties: {
-        github: { type: 'string', default: '' },
-        anthropic: { type: 'string', default: '' },
-        grok: { type: 'string', default: '' }
-      },
-      default: {}
-    },
-    preferences: {
-      type: 'object',
-      properties: {
-        consensusTurns: { type: 'number', default: 2 },
-        claudeModel: { type: 'string', default: 'claude-sonnet-4-20250514' },
-        grokModel: { type: 'string', default: 'grok-code-fast-1' },
-        theme: { type: 'string', default: 'system' },
-        defaultMode: { type: 'string', default: 'consensus' },
-        steeringAction: { type: 'string', default: 'steer' },
-        codeExecution: { type: 'boolean', default: true }
-      },
-      default: {}
+// ── Stable machine-bound encryption key ─────────────────────────────
+function getEncryptionKey() {
+  const keyPath = path.join(app.getPath('userData'), '.machine-id');
+  try {
+    if (fs.existsSync(keyPath)) {
+      const existing = fs.readFileSync(keyPath, 'utf8').trim();
+      if (existing && existing.length >= 32) return existing;
     }
+  } catch (_) {}
+  const fresh = crypto.randomBytes(32).toString('hex');
+  try {
+    fs.mkdirSync(path.dirname(keyPath), { recursive: true });
+    fs.writeFileSync(keyPath, fresh, { mode: 0o600 });
+  } catch (err) {
+    console.error('Sassy Brain: failed to persist machine key:', err.message);
   }
-});
+  return fresh;
+}
 
-// ── GPU acceleration (from Grok-Desktop) ────────────────────────────
+// ── Provider keys schema (built from catalog) ──────────────────────
+function buildKeysSchema() {
+  const props = {};
+  for (const p of Providers.CATALOG) {
+    if (p.needsKey) props[p.id] = { type: 'string', default: '' };
+  }
+  return { type: 'object', properties: props, default: {} };
+}
+
+const ALLOWED_PROVIDERS = new Set(Providers.CATALOG.map(p => p.id));
+const ALLOWED_KEY_PROVIDERS = new Set(
+  Providers.CATALOG.filter(p => p.needsKey).map(p => p.id)
+);
+
+const ALLOWED_PREFS = new Set([
+  'slotA', 'slotB', 'modelA', 'modelB',
+  'theme', 'steeringAction',
+  'showRawResponse', 'autoScroll'
+]);
+
+function isKeyProvider(p) { return typeof p === 'string' && ALLOWED_KEY_PROVIDERS.has(p); }
+function isAnyProvider(p) { return typeof p === 'string' && ALLOWED_PROVIDERS.has(p); }
+function isSafePrefKey(k) { return typeof k === 'string' && ALLOWED_PREFS.has(k); }
+
+// ── Store (deferred until app.whenReady) ────────────────────────────
+let store;
+function createStore() {
+  return new Store({
+    encryptionKey: getEncryptionKey(),
+    clearInvalidConfig: true,
+    schema: {
+      keys: buildKeysSchema(),
+      preferences: {
+        type: 'object',
+        properties: {
+          slotA: { type: 'string', default: 'anthropic' },
+          slotB: { type: 'string', default: 'openai' },
+          modelA: { type: 'string', default: '' },
+          modelB: { type: 'string', default: '' },
+          theme: { type: 'string', default: 'system' },
+          steeringAction: { type: 'string', default: 'steer' },
+          showRawResponse: { type: 'boolean', default: false },
+          autoScroll: { type: 'boolean', default: true }
+        },
+        default: {}
+      }
+    }
+  });
+}
+
+// ── Session overlays (in-memory; reset on newChat / app restart) ───
+// Shape: { [providerId]: <parsed JSON object> }
+const sessionOverlays = {};
+
+// ── Active fetch controllers for abort ─────────────────────────────
+const activeStreams = new Map(); // signal_id -> AbortController
+
+// ── GPU config ─────────────────────────────────────────────────────
 function configureGpuAcceleration() {
   const isHeadless = !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY && os.platform() === 'linux';
   const isContainer = fs.existsSync('/.dockerenv') || process.env.container === 'docker';
-
   let hasGpu = false;
   try {
     if (fs.existsSync('/dev/nvidia0') || process.env.NVIDIA_VISIBLE_DEVICES) hasGpu = true;
     if (fs.existsSync('/dev/dri/card0')) hasGpu = true;
-    if (os.platform() === 'win32') hasGpu = true; // Assume GPU on Windows
+    if (os.platform() === 'win32') hasGpu = true;
   } catch (_) {}
-
-  const shouldDisable = isHeadless || (isContainer && !hasGpu) || process.env.SASSY_DISABLE_GPU === 'true';
-
-  if (shouldDisable) {
+  if (isHeadless || (isContainer && !hasGpu) || process.env.SASSY_DISABLE_GPU === 'true') {
     app.disableHardwareAcceleration();
     app.commandLine.appendSwitch('disable-gpu-compositing');
-    console.log('Sassy Brain: GPU acceleration disabled');
   }
 }
-
 configureGpuAcceleration();
 
-// GPU crash handler
-let gpuRestartAttempted = false;
-process.on('uncaughtException', (error) => {
-  if (error.message && (error.message.includes('gpu') || error.message.includes('GPU') || error.message.includes('vaInitialize'))) {
-    console.log('Sassy Brain: GPU error caught, continuing:', error.message);
+// ── Error safety nets ──────────────────────────────────────────────
+process.on('uncaughtException', (error, origin) => {
+  const msg = (error && error.message) || '';
+  if (msg.includes('gpu') || msg.includes('GPU') || msg.includes('vaInitialize')) {
+    console.log('Sassy Brain: GPU error caught, continuing:', msg);
     return;
   }
-  throw error;
+  console.error('Sassy Brain: uncaughtException at', origin, error);
+  try {
+    if (app.isReady()) {
+      dialog.showErrorBox('Sassy Brain — Unexpected Error',
+        `${msg}\n\nThe app will keep running. Restart if things look broken.`);
+    }
+  } catch (_) {}
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Sassy Brain: unhandled promise rejection:', reason);
 });
 
-// ── Single instance lock ────────────────────────────────────────────
+// ── Single instance ────────────────────────────────────────────────
+let mainWindow;
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
@@ -91,18 +142,23 @@ if (!gotLock) {
   });
 }
 
-// ── Window management ───────────────────────────────────────────────
-let mainWindow;
+function hasAnyUsableKey() {
+  try {
+    const keys = store.get('keys', {});
+    for (const p of Providers.CATALOG) {
+      if (!p.needsKey) return true; // ollama — always usable
+      if (keys[p.id]) return true;
+    }
+  } catch (_) {}
+  return false;
+}
 
 function createWindow() {
-  const keys = store.get('keys', {});
-  const hasKeys = keys.anthropic || keys.grok;
-
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 900,
-    minHeight: 650,
+    width: 1600,
+    height: 960,
+    minWidth: 1000,
+    minHeight: 700,
     title: 'Sassy Brain',
     backgroundColor: '#09090b',
     webPreferences: {
@@ -110,20 +166,15 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       spellcheck: true,
-      sandbox: false
+      sandbox: true
     },
     icon: path.join(__dirname, 'icon.png')
   });
 
   Menu.setApplicationMenu(null);
 
-  if (!hasKeys) {
-    mainWindow.loadFile(path.join(__dirname, 'setup.html'));
-  } else {
-    mainWindow.loadFile(path.join(__dirname, 'chat.html'));
-  }
+  mainWindow.loadFile(path.join(__dirname, hasAnyUsableKey() ? 'chat.html' : 'setup.html'));
 
-  // Theme sync
   const sendTheme = () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('theme-updated', nativeTheme.shouldUseDarkColors ? 'dark' : 'light');
@@ -132,76 +183,100 @@ function createWindow() {
   sendTheme();
   nativeTheme.on('updated', sendTheme);
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
+  if (process.env.NODE_ENV === 'development') mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => { mainWindow = null; });
 
-  // Security: restrict navigation
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (!url.startsWith('file://')) {
       event.preventDefault();
       shell.openExternal(url);
     }
   });
-
-  // Security: block new window creation
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  try {
+    store = createStore();
+  } catch (err) {
+    console.error('Sassy Brain: failed to create store:', err);
+    dialog.showErrorBox('Sassy Brain — Config Error',
+      `Could not initialize encrypted config: ${err.message}\n\nSome settings may not persist.`);
+    store = new Store({ clearInvalidConfig: true });
+  }
+  createWindow();
+}).catch(err => {
+  console.error('Sassy Brain: fatal startup error:', err);
+  try { dialog.showErrorBox('Sassy Brain — Startup Failed', err.message || String(err)); } catch (_) {}
+  app.exit(1);
+});
+
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 
-// ── IPC: Key Management ────────────────────────────────────────────
+// ── IPC: Catalog ───────────────────────────────────────────────────
+ipcMain.handle('providers:list', () => Providers.listProviders());
+
+// ── IPC: Keys ──────────────────────────────────────────────────────
 ipcMain.handle('keys:get', () => {
   const keys = store.get('keys', {});
-  return {
-    github: keys.github ? '••••' + keys.github.slice(-4) : '',
-    anthropic: keys.anthropic ? '••••' + keys.anthropic.slice(-4) : '',
-    grok: keys.grok ? '••••' + keys.grok.slice(-4) : ''
-  };
+  const out = {};
+  for (const p of Providers.CATALOG) {
+    if (!p.needsKey) continue;
+    const v = keys[p.id];
+    out[p.id] = v ? '••••' + v.slice(-4) : '';
+  }
+  return out;
 });
 
 ipcMain.handle('keys:has', () => {
   const keys = store.get('keys', {});
-  return {
-    github: !!keys.github,
-    anthropic: !!keys.anthropic,
-    grok: !!keys.grok
-  };
+  const out = {};
+  for (const p of Providers.CATALOG) {
+    out[p.id] = !p.needsKey || !!keys[p.id];
+  }
+  return out;
 });
 
 ipcMain.handle('keys:set', (_, provider, key) => {
-  const keys = store.get('keys', {});
+  if (!isKeyProvider(provider)) return { error: 'invalid provider' };
+  if (typeof key !== 'string' || key.length === 0 || key.length > 2048) {
+    return { error: 'invalid key' };
+  }
+  const keys = Object.assign({}, store.get('keys', {}));
   keys[provider] = key;
   store.set('keys', keys);
-  return true;
+  return { ok: true };
 });
 
 ipcMain.handle('keys:clear', (_, provider) => {
-  const keys = store.get('keys', {});
+  if (!isKeyProvider(provider)) return { error: 'invalid provider' };
+  const keys = Object.assign({}, store.get('keys', {}));
   keys[provider] = '';
   store.set('keys', keys);
-  return true;
-});
-
-ipcMain.handle('keys:getRaw', (_, provider) => {
-  const keys = store.get('keys', {});
-  return keys[provider] || '';
+  return { ok: true };
 });
 
 // ── IPC: Preferences ───────────────────────────────────────────────
 ipcMain.handle('prefs:get', () => store.get('preferences', {}));
 ipcMain.handle('prefs:set', (_, key, value) => {
-  const prefs = store.get('preferences', {});
+  if (!isSafePrefKey(key)) return { error: 'invalid pref key' };
+  const t = typeof value;
+  if (t !== 'string' && t !== 'number' && t !== 'boolean') {
+    return { error: 'invalid pref value' };
+  }
+  // Further validation: slot prefs must be provider ids.
+  if ((key === 'slotA' || key === 'slotB') && !isAnyProvider(value)) {
+    return { error: 'invalid provider id' };
+  }
+  const prefs = Object.assign({}, store.get('preferences', {}));
   prefs[key] = value;
   store.set('preferences', prefs);
-  return true;
+  return { ok: true };
 });
 
 // ── IPC: Navigation ────────────────────────────────────────────────
@@ -210,74 +285,114 @@ ipcMain.handle('nav:toChat', () => {
     mainWindow.loadFile(path.join(__dirname, 'chat.html'));
   }
 });
-
 ipcMain.handle('nav:toSetup', () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.loadFile(path.join(__dirname, 'setup.html'));
   }
 });
 
-// ── IPC: Streaming API calls (the actual engine) ────────────────────
-// These run in main process to avoid CORS and keep keys out of renderer
+// ── IPC: Shell (validated) ─────────────────────────────────────────
+ipcMain.handle('shell:openExternal', (_, url) => {
+  if (typeof url !== 'string') return { error: 'bad url' };
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return { error: 'bad protocol' };
+  } catch (_) { return { error: 'bad url' }; }
+  shell.openExternal(url);
+  return { ok: true };
+});
 
-ipcMain.handle('ai:stream', async (event, { provider, messages, model, signal_id }) => {
+// ── IPC: Session overlay management ────────────────────────────────
+// The renderer supplies a JSON string per provider at session start
+// (or whenever changed). The main process parses it once, validates
+// it is a plain object, and keeps it in memory for the session.
+ipcMain.handle('session:setOverlay', (_, provider, jsonText) => {
+  if (!isAnyProvider(provider)) return { error: 'invalid provider' };
+  const trimmed = String(jsonText || '').trim();
+  if (!trimmed) {
+    delete sessionOverlays[provider];
+    return { ok: true, cleared: true };
+  }
+  let parsed;
+  try { parsed = JSON.parse(trimmed); }
+  catch (err) { return { error: 'JSON parse: ' + err.message }; }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { error: 'overlay must be a JSON object' };
+  }
+  sessionOverlays[provider] = parsed;
+  return { ok: true };
+});
+ipcMain.handle('session:getOverlays', () => {
+  const out = {};
+  for (const k of Object.keys(sessionOverlays)) out[k] = sessionOverlays[k];
+  return out;
+});
+ipcMain.handle('session:clearOverlays', () => {
+  for (const k of Object.keys(sessionOverlays)) delete sessionOverlays[k];
+  return { ok: true };
+});
+
+// ── IPC: Abort stream ──────────────────────────────────────────────
+ipcMain.handle('ai:abort', (_, signal_id) => {
+  const ctrl = activeStreams.get(signal_id);
+  if (ctrl) {
+    try { ctrl.abort(); } catch (_) {}
+    activeStreams.delete(signal_id);
+    return { ok: true };
+  }
+  return { ok: false };
+});
+
+// ── Stream orchestrator (shared by all providers) ──────────────────
+async function runStream({ provider, model, messages, signal_id, event }) {
+  const pmeta = Providers.getProvider(provider);
+  if (!pmeta) return { error: `Unknown provider: ${provider}` };
+
   const keys = store.get('keys', {});
-  const prefs = store.get('preferences', {});
-
-  let url, headers, body;
-
-  if (provider === 'anthropic') {
-    const apiKey = keys.anthropic;
-    if (!apiKey) return { error: 'No Anthropic API key configured' };
-
-    url = 'https://api.anthropic.com/v1/messages';
-    headers = {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
-    };
-    body = JSON.stringify({
-      model: model || prefs.claudeModel || 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      stream: true,
-      messages
-    });
-  } else if (provider === 'grok') {
-    const apiKey = keys.grok;
-    if (!apiKey) return { error: 'No Grok API key configured' };
-
-    url = 'https://api.x.ai/v1/chat/completions';
-    headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    };
-
-    const grokModel = model || prefs.grokModel || 'grok-code-fast-1';
-    const grokBody = {
-      model: grokModel,
-      stream: true,
-      messages
-    };
-
-    // Add code_interpreter tool for models that support it
-    if (prefs.codeExecution !== false) {
-      grokBody.tools = [{ type: 'function', function: { name: 'code_interpreter', description: 'Execute Python code', parameters: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } } }];
-    }
-
-    body = JSON.stringify(grokBody);
-  } else {
-    return { error: `Unknown provider: ${provider}` };
+  let apiKey = '';
+  if (pmeta.needsKey) {
+    apiKey = keys[provider] || '';
+    if (!apiKey) return { error: `No API key configured for ${pmeta.label}` };
   }
 
-  try {
-    const response = await fetch(url, { method: 'POST', headers, body });
+  // Build overlay used for this request. OpenAI-compatible providers
+  // only emit the final `usage` frame when the caller opts in via
+  // stream_options.include_usage — inject that unless the user's own
+  // overlay already sets stream_options (respect their override).
+  let overlay = sessionOverlays[provider] ? Object.assign({}, sessionOverlays[provider]) : null;
+  if (Providers.needsStreamUsageOpt(provider)) {
+    if (!overlay || !overlay.stream_options) {
+      overlay = Object.assign({}, overlay || {}, {
+        stream_options: { include_usage: true }
+      });
+    }
+  }
 
+  let req;
+  try {
+    req = Providers.buildRequest(provider, { apiKey, model, messages, stream: true, overlay });
+  } catch (err) {
+    return { error: err.message };
+  }
+
+  const controller = new AbortController();
+  if (signal_id) activeStreams.set(signal_id, controller);
+
+  // Collect usage/metadata across frames — later frames overwrite earlier.
+  const meta = { startedAt: Date.now(), firstChunkAt: null };
+
+  try {
+    const response = await fetch(req.url, {
+      method: 'POST',
+      headers: req.headers,
+      body: req.body,
+      signal: controller.signal
+    });
     if (!response.ok) {
       const errText = await response.text();
-      return { error: `${provider} API error ${response.status}: ${errText}` };
+      return { error: `${pmeta.label} ${response.status}: ${errText.slice(0, 500)}` };
     }
 
-    // Stream chunks back to renderer via IPC events
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -285,119 +400,95 @@ ipcMain.handle('ai:stream', async (event, { provider, messages, model, signal_id
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
 
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (!line.startsWith('data:')) continue;
+        const data = line.slice(5).trim();
         if (data === '[DONE]') continue;
+        let parsed;
+        try { parsed = JSON.parse(data); } catch (_) { continue; }
 
-        try {
-          const parsed = JSON.parse(data);
-          let text = '';
+        const frameMeta = Providers.extractStreamMeta(provider, parsed);
+        if (frameMeta) {
+          if (typeof frameMeta.input === 'number') meta.input = frameMeta.input;
+          if (typeof frameMeta.output === 'number') meta.output = frameMeta.output;
+          if (frameMeta.finishReason) meta.finishReason = frameMeta.finishReason;
+        }
 
-          if (provider === 'anthropic') {
-            // Anthropic SSE format
-            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-              text = parsed.delta.text;
-            }
-          } else if (provider === 'grok') {
-            // OpenAI-compatible SSE format
-            if (parsed.choices?.[0]?.delta?.content) {
-              text = parsed.choices[0].delta.content;
-            }
-          }
-
-          if (text && mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('ai:chunk', { signal_id, provider, text });
-          }
-        } catch (_) {}
+        const text = Providers.parseStreamChunk(provider, parsed);
+        if (text && mainWindow && !mainWindow.isDestroyed()) {
+          if (meta.firstChunkAt === null) meta.firstChunkAt = Date.now();
+          mainWindow.webContents.send('ai:chunk', { signal_id, provider, text });
+        }
       }
     }
 
-    // Signal completion
+    meta.endedAt = Date.now();
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('ai:done', { signal_id, provider });
+      mainWindow.webContents.send('ai:done', { signal_id, provider, meta });
     }
+    return { ok: true, meta };
+  } catch (err) {
+    meta.endedAt = Date.now();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('ai:done', {
+        signal_id, provider,
+        aborted: err.name === 'AbortError',
+        meta
+      });
+    }
+    if (err.name === 'AbortError') return { ok: true, aborted: true, meta };
+    return { error: err.message };
+  } finally {
+    if (signal_id) activeStreams.delete(signal_id);
+  }
+}
 
-    return { ok: true };
+ipcMain.handle('ai:stream', async (event, opts) => runStream({ event, ...opts }));
+
+// ── Non-streaming ──────────────────────────────────────────────────
+ipcMain.handle('ai:complete', async (_, { provider, model, messages }) => {
+  const pmeta = Providers.getProvider(provider);
+  if (!pmeta) return { error: `Unknown provider: ${provider}` };
+  const keys = store.get('keys', {});
+  let apiKey = '';
+  if (pmeta.needsKey) {
+    apiKey = keys[provider] || '';
+    if (!apiKey) return { error: `No API key configured for ${pmeta.label}` };
+  }
+  const overlay = sessionOverlays[provider] || null;
+  let req;
+  try {
+    req = Providers.buildRequest(provider, { apiKey, model, messages, stream: false, overlay });
   } catch (err) {
     return { error: err.message };
   }
-});
-
-// ── IPC: Non-streaming call for consensus rounds ────────────────────
-ipcMain.handle('ai:complete', async (_, { provider, messages, model }) => {
-  const keys = store.get('keys', {});
-  const prefs = store.get('preferences', {});
-
-  let url, headers, body;
-
-  if (provider === 'anthropic') {
-    url = 'https://api.anthropic.com/v1/messages';
-    headers = {
-      'Content-Type': 'application/json',
-      'x-api-key': keys.anthropic,
-      'anthropic-version': '2023-06-01'
-    };
-    body = JSON.stringify({
-      model: model || prefs.claudeModel || 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages
-    });
-  } else if (provider === 'grok') {
-    url = 'https://api.x.ai/v1/chat/completions';
-    headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${keys.grok}`
-    };
-    body = JSON.stringify({
-      model: model || prefs.grokModel || 'grok-code-fast-1',
-      messages
-    });
-  }
-
+  const startedAt = Date.now();
   try {
-    const response = await fetch(url, { method: 'POST', headers, body });
+    const response = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
     if (!response.ok) {
       const errText = await response.text();
-      return { error: `${provider} ${response.status}: ${errText}` };
+      return { error: `${pmeta.label} ${response.status}: ${errText.slice(0, 500)}` };
     }
     const data = await response.json();
-
-    let text = '';
-    if (provider === 'anthropic') {
-      text = data.content?.map(c => c.text).join('') || '';
-    } else if (provider === 'grok') {
-      text = data.choices?.[0]?.message?.content || '';
-    }
-
-    return { text };
+    return {
+      text: Providers.parseComplete(provider, data),
+      raw: data,
+      meta: Object.assign(
+        { startedAt, endedAt: Date.now() },
+        Providers.extractCompleteMeta(provider, data) || {}
+      )
+    };
   } catch (err) {
     return { error: err.message };
   }
 });
 
-// ── IPC: GitHub API ─────────────────────────────────────────────────
-ipcMain.handle('github:test', async () => {
-  const key = store.get('keys', {}).github;
-  if (!key) return { error: 'No GitHub key' };
-
-  try {
-    const res = await fetch('https://api.github.com/user', {
-      headers: { 'Authorization': `Bearer ${key}`, 'Accept': 'application/vnd.github+json' }
-    });
-    if (!res.ok) return { error: `GitHub ${res.status}` };
-    const data = await res.json();
-    return { login: data.login, name: data.name };
-  } catch (err) {
-    return { error: err.message };
-  }
-});
-
-// ── IPC: App info ───────────────────────────────────────────────────
+// ── App info ───────────────────────────────────────────────────────
 ipcMain.handle('app:version', () => app.getVersion());
 ipcMain.handle('app:platform', () => process.platform);

@@ -8,273 +8,122 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #09090b;
-      --surface: #18181b;
-      --surface2: #27272a;
-      --border: #3f3f46;
-      --text: #fafafa;
-      --text2: #a1a1aa;
-      --accent: #f97316;
-      --accent2: #ea580c;
-      --green: #22c55e;
-      --red: #ef4444;
-      --blue: #3b82f6;
-      --purple: #a855f7;
+      --bg: #09090b; --surface: #18181b; --surface2: #27272a;
+      --border: #3f3f46; --text: #fafafa; --text2: #a1a1aa;
+      --accent: #f97316; --accent2: #ea580c;
+      --green: #22c55e; --red: #ef4444; --purple: #a855f7;
       --radius: 12px;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      background: var(--bg); color: var(--text);
+      height: 100vh; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
       -webkit-app-region: drag;
     }
-
     .container {
       -webkit-app-region: no-drag;
-      width: 560px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 48px;
+      width: 640px; max-height: 92vh; overflow-y: auto; padding: 40px 48px;
     }
-
     .logo {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 4px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 28px; font-weight: 700; margin-bottom: 2px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-
     .subtitle {
-      color: var(--text2);
-      font-size: 14px;
-      margin-bottom: 40px;
+      color: var(--text2); font-size: 13px; margin-bottom: 24px;
       font-family: 'JetBrains Mono', monospace;
     }
-
-    .key-group {
-      margin-bottom: 24px;
+    .mode-info {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 24px;
     }
+    .mode-info h3 {
+      font-size: 12px; color: var(--accent); margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .mode-info p { font-size: 12px; color: var(--text2); line-height: 1.55; }
+    .mode-info strong { color: var(--text); }
 
+    .key-group { margin-bottom: 16px; }
     .key-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
     }
-
     .key-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--border);
-      transition: background 0.3s;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--border); transition: background 0.3s;
     }
     .key-dot.active { background: var(--green); }
     .key-dot.error { background: var(--red); }
-
-    .key-label {
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .key-badge {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: var(--surface2);
-      color: var(--text2);
-    }
-    .key-badge.required { background: rgba(249,115,22,0.15); color: var(--accent); }
-
+    .key-label { font-weight: 600; font-size: 13px; }
     .key-hint {
-      font-size: 12px;
-      color: var(--text2);
-      margin-bottom: 6px;
-    }
-
-    .key-hint a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 8px;
-    }
-
-    input[type="password"],
-    input[type="text"] {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: var(--text);
+      font-size: 11px; color: var(--text2); margin-bottom: 4px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
+    }
+    .key-hint a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .input-row { display: flex; gap: 8px; }
+    input[type="password"], input[type="text"] {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; color: var(--text);
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      outline: none; transition: border-color 0.2s;
     }
     input:focus { border-color: var(--accent); }
-    input::placeholder { color: var(--text2); opacity: 0.5; }
-
+    input::placeholder { color: var(--text2); opacity: 0.45; }
     .btn-test {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 16px;
-      color: var(--text);
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      transition: all 0.2s;
-      white-space: nowrap;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; color: var(--text);
+      cursor: pointer; font-size: 11px; font-weight: 600;
+      transition: all 0.2s; white-space: nowrap;
     }
     .btn-test:hover { background: var(--border); }
     .btn-test.success { border-color: var(--green); color: var(--green); }
     .btn-test.fail { border-color: var(--red); color: var(--red); }
-
     .test-result {
-      font-size: 11px;
-      margin-top: 4px;
-      font-family: 'JetBrains Mono', monospace;
-      min-height: 16px;
+      font-size: 10px; margin-top: 3px;
+      font-family: 'JetBrains Mono', monospace; min-height: 14px;
     }
     .test-result.ok { color: var(--green); }
     .test-result.err { color: var(--red); }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 32px 0;
-      opacity: 0.5;
-    }
-
+    .divider { height: 1px; background: var(--border); margin: 24px 0; opacity: 0.5; }
     .btn-launch {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: 'Inter', sans-serif;
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; border-radius: 10px; color: white;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; font-family: 'Inter', sans-serif;
       letter-spacing: 0.5px;
     }
     .btn-launch:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(249,115,22,0.3); }
-    .btn-launch:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
+    .btn-launch:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
     .footer-note {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 11px;
-      color: var(--text2);
-      font-family: 'JetBrains Mono', monospace;
+      text-align: center; margin-top: 14px; font-size: 11px;
+      color: var(--text2); font-family: 'JetBrains Mono', monospace;
     }
-
-    .mode-info {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 32px;
-    }
-
-    .mode-info h3 {
-      font-size: 13px;
-      color: var(--accent);
-      margin-bottom: 8px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .mode-info p {
-      font-size: 12px;
-      color: var(--text2);
-      line-height: 1.6;
-    }
-
-    .mode-info strong { color: var(--text); }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo">SASSY BRAIN</div>
-    <div class="subtitle">consensus engine // api key setup</div>
+    <div class="subtitle">multi-provider dev testing tool // api key setup</div>
 
     <div class="mode-info">
-      <h3>How Consensus Mode Works</h3>
+      <h3>How It Works</h3>
       <p>
-        Your prompt goes to <strong>Claude</strong> and <strong>Grok</strong> simultaneously.
-        They debate for 2 rounds behind the scenes, then present you the
-        <strong>agreed-upon truth</strong>. You can also steer mid-stream — redirect either
-        AI while it's still generating, just like VS Code's message steering.
+        Two <strong>slots</strong>, each pickable to any provider. Send a prompt →
+        both slots run in parallel, responses stream side-by-side. Per-slot
+        <strong>JSON overlay</strong> lets you pass any API parameter (temperature,
+        tools, reasoning_effort, etc.) — merged into every request body for the session.
+      </p>
+      <p style="margin-top:6px">
+        Configure at least one provider. <strong>Ollama</strong> works without a key
+        if you have it running locally.
       </p>
     </div>
 
-    <!-- Anthropic Key -->
-    <div class="key-group">
-      <div class="key-header">
-        <div class="key-dot" id="dot-anthropic"></div>
-        <span class="key-label">Anthropic (Claude)</span>
-        <span class="key-badge required">required*</span>
-      </div>
-      <div class="key-hint">Get key at <a href="#" onclick="openExternal('https://console.anthropic.com/settings/keys')">console.anthropic.com</a></div>
-      <div class="input-row">
-        <input type="password" id="key-anthropic" placeholder="sk-ant-..." spellcheck="false" autocomplete="off">
-        <button class="btn-test" id="test-anthropic" onclick="testKey('anthropic')">Test</button>
-      </div>
-      <div class="test-result" id="result-anthropic"></div>
-    </div>
-
-    <!-- Grok Key -->
-    <div class="key-group">
-      <div class="key-header">
-        <div class="key-dot" id="dot-grok"></div>
-        <span class="key-label">xAI (Grok)</span>
-        <span class="key-badge required">required*</span>
-      </div>
-      <div class="key-hint">Get key at <a href="#" onclick="openExternal('https://console.x.ai/')">console.x.ai</a></div>
-      <div class="input-row">
-        <input type="password" id="key-grok" placeholder="xai-..." spellcheck="false" autocomplete="off">
-        <button class="btn-test" id="test-grok" onclick="testKey('grok')">Test</button>
-      </div>
-      <div class="test-result" id="result-grok"></div>
-    </div>
-
-    <!-- GitHub Key -->
-    <div class="key-group">
-      <div class="key-header">
-        <div class="key-dot" id="dot-github"></div>
-        <span class="key-label">GitHub</span>
-        <span class="key-badge">optional</span>
-      </div>
-      <div class="key-hint">Get PAT at <a href="#" onclick="openExternal('https://github.com/settings/tokens')">github.com/settings/tokens</a></div>
-      <div class="input-row">
-        <input type="password" id="key-github" placeholder="ghp_..." spellcheck="false" autocomplete="off">
-        <button class="btn-test" id="test-github" onclick="testKey('github')">Test</button>
-      </div>
-      <div class="test-result" id="result-github"></div>
-    </div>
+    <div id="key-rows"><!-- populated from provider catalog --></div>
 
     <div class="divider"></div>
 
@@ -283,51 +132,94 @@
     </button>
 
     <div class="footer-note">
-      * At least one AI key required. Both needed for Consensus Mode.<br>
-      Keys encrypted locally via electron-store. Never transmitted except to their own API.
+      Keys encrypted locally via electron-store. Never transmitted except to each provider's own API.
     </div>
   </div>
 
   <script>
-    function openExternal(url) {
-      // Use shell.openExternal via a simple approach
-      window.open(url, '_blank');
+    let PROVIDERS = [];
+
+    function el(tag, attrs, children) {
+      const e = document.createElement(tag);
+      if (attrs) for (const k of Object.keys(attrs)) {
+        if (k === 'className') e.className = attrs[k];
+        else if (k === 'textContent') e.textContent = attrs[k];
+        else if (k.startsWith('on')) e[k] = attrs[k];
+        else e.setAttribute(k, attrs[k]);
+      }
+      if (children) for (const c of children) if (c) e.appendChild(c);
+      return e;
     }
 
-    // Load existing keys on page load
+    function renderKeyRow(p) {
+      const dot = el('div', { className: 'key-dot', id: `dot-${p.id}` });
+      const label = el('span', { className: 'key-label', textContent: p.label });
+      const header = el('div', { className: 'key-header' }, [dot, label]);
+
+      const hint = el('div', { className: 'key-hint' });
+      if (p.keyUrl) {
+        hint.appendChild(document.createTextNode('Get key at '));
+        const a = el('a', { textContent: p.keyUrl.replace(/^https?:\/\//, '') });
+        a.addEventListener('click', () => window.sassy.shell.openExternal(p.keyUrl));
+        hint.appendChild(a);
+      } else {
+        hint.textContent = `Local provider — no key required`;
+      }
+
+      const input = el('input', {
+        type: 'password', id: `key-${p.id}`,
+        placeholder: p.keyHint || '', spellcheck: 'false', autocomplete: 'off'
+      });
+      input.addEventListener('input', checkLaunchReady);
+      const btn = el('button', {
+        className: 'btn-test', id: `test-${p.id}`, textContent: 'Test'
+      });
+      btn.addEventListener('click', () => testKey(p.id));
+      const row = el('div', { className: 'input-row' }, [input, btn]);
+      const result = el('div', { className: 'test-result', id: `result-${p.id}` });
+
+      return el('div', { className: 'key-group' }, [header, hint, row, result]);
+    }
+
     async function init() {
-      const existing = await window.sassy.keys.get();
-      if (existing.anthropic) {
-        document.getElementById('key-anthropic').placeholder = existing.anthropic;
-        document.getElementById('dot-anthropic').classList.add('active');
-      }
-      if (existing.grok) {
-        document.getElementById('key-grok').placeholder = existing.grok;
-        document.getElementById('dot-grok').classList.add('active');
-      }
-      if (existing.github) {
-        document.getElementById('key-github').placeholder = existing.github;
-        document.getElementById('dot-github').classList.add('active');
+      PROVIDERS = await window.sassy.providers.list();
+      const host = document.getElementById('key-rows');
+
+      const has = await window.sassy.keys.has();
+
+      for (const p of PROVIDERS) {
+        // Skip providers that don't need a key — they're always available.
+        if (!p.needsKey) continue;
+        const row = renderKeyRow(p);
+        host.appendChild(row);
+        if (has[p.id]) {
+          document.getElementById(`key-${p.id}`).placeholder =
+            'key already saved — enter new one to replace';
+          document.getElementById(`dot-${p.id}`).classList.add('active');
+        }
       }
       checkLaunchReady();
     }
 
     function checkLaunchReady() {
-      const anthr = document.getElementById('key-anthropic').value || document.getElementById('dot-anthropic').classList.contains('active');
-      const grok = document.getElementById('key-grok').value || document.getElementById('dot-grok').classList.contains('active');
-      document.getElementById('btn-launch').disabled = !(anthr || grok);
+      let anyReady = false;
+      for (const p of PROVIDERS) {
+        if (!p.needsKey) { anyReady = true; continue; }
+        const input = document.getElementById(`key-${p.id}`);
+        const dot = document.getElementById(`dot-${p.id}`);
+        if (!input) continue;
+        if (input.value.trim() || (dot && dot.classList.contains('active'))) {
+          anyReady = true;
+        }
+      }
+      document.getElementById('btn-launch').disabled = !anyReady;
     }
 
-    // Listen for input changes
-    ['anthropic', 'grok', 'github'].forEach(p => {
-      document.getElementById(`key-${p}`).addEventListener('input', checkLaunchReady);
-    });
-
-    async function testKey(provider) {
-      const input = document.getElementById(`key-${provider}`);
-      const btn = document.getElementById(`test-${provider}`);
-      const result = document.getElementById(`result-${provider}`);
-      const dot = document.getElementById(`dot-${provider}`);
+    async function testKey(providerId) {
+      const input = document.getElementById(`key-${providerId}`);
+      const btn = document.getElementById(`test-${providerId}`);
+      const result = document.getElementById(`result-${providerId}`);
+      const dot = document.getElementById(`dot-${providerId}`);
 
       const key = input.value.trim();
       if (!key) {
@@ -335,68 +227,49 @@
         result.className = 'test-result err';
         return;
       }
-
       btn.textContent = '...';
       result.textContent = '';
 
-      // Save key first
-      await window.sassy.keys.set(provider, key);
+      const saveRes = await window.sassy.keys.set(providerId, key);
+      if (saveRes && saveRes.error) {
+        btn.textContent = 'Fail'; btn.className = 'btn-test fail';
+        result.textContent = saveRes.error;
+        result.className = 'test-result err';
+        dot.className = 'key-dot error';
+        return;
+      }
 
-      if (provider === 'github') {
-        const res = await window.sassy.github.test();
-        if (res.error) {
-          btn.textContent = 'Fail';
-          btn.className = 'btn-test fail';
-          result.textContent = res.error;
-          result.className = 'test-result err';
-          dot.className = 'key-dot error';
-        } else {
-          btn.textContent = '✓';
-          btn.className = 'btn-test success';
-          result.textContent = `authenticated as ${res.login}`;
-          result.className = 'test-result ok';
-          dot.className = 'key-dot active';
-        }
+      const res = await window.sassy.ai.complete({
+        provider: providerId,
+        messages: [{ role: 'user', content: 'Say "ok".' }]
+      });
+
+      if (res.error) {
+        btn.textContent = 'Fail'; btn.className = 'btn-test fail';
+        result.textContent = (res.error || '').substring(0, 90);
+        result.className = 'test-result err';
+        dot.className = 'key-dot error';
       } else {
-        // Test AI keys with a minimal request
-        const messages = provider === 'anthropic'
-          ? [{ role: 'user', content: 'Respond with only the word "connected"' }]
-          : [{ role: 'user', content: 'Respond with only the word "connected"' }];
-
-        const res = await window.sassy.ai.complete({
-          provider,
-          messages,
-          model: provider === 'anthropic' ? 'claude-sonnet-4-20250514' : 'grok-3-fast'
-        });
-
-        if (res.error) {
-          btn.textContent = 'Fail';
-          btn.className = 'btn-test fail';
-          result.textContent = res.error.substring(0, 80);
-          result.className = 'test-result err';
-          dot.className = 'key-dot error';
-        } else {
-          btn.textContent = '✓';
-          btn.className = 'btn-test success';
-          result.textContent = `connected — ${res.text.substring(0, 40)}`;
-          result.className = 'test-result ok';
-          dot.className = 'key-dot active';
-        }
+        btn.textContent = '✓'; btn.className = 'btn-test success';
+        result.textContent = `connected — ${(res.text || '').substring(0, 40)}`;
+        result.className = 'test-result ok';
+        dot.className = 'key-dot active';
       }
 
       setTimeout(() => {
         btn.textContent = 'Test';
         btn.className = 'btn-test';
       }, 3000);
-
       checkLaunchReady();
     }
 
     async function launch() {
-      // Save any unsaved keys
-      for (const p of ['anthropic', 'grok', 'github']) {
-        const val = document.getElementById(`key-${p}`).value.trim();
-        if (val) await window.sassy.keys.set(p, val);
+      for (const p of PROVIDERS) {
+        if (!p.needsKey) continue;
+        const input = document.getElementById(`key-${p.id}`);
+        if (input && input.value.trim()) {
+          await window.sassy.keys.set(p.id, input.value.trim());
+        }
       }
       await window.sassy.nav.toChat();
     }
