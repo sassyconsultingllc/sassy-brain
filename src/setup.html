@@ -8,272 +8,235 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #09090b; --surface: #18181b; --surface2: #27272a;
-      --border: #3f3f46; --text: #fafafa; --text2: #a1a1aa;
-      --accent: #f97316; --accent2: #ea580c;
-      --green: #22c55e; --red: #ef4444; --purple: #a855f7;
-      --radius: 12px;
+      --bg: #09090b; --surface: #18181b; --surface2: #27272a; --border: #3f3f46;
+      --text: #fafafa; --text2: #a1a1aa; --accent: #f97316; --accent2: #ea580c;
+      --green: #22c55e; --red: #ef4444; --blue: #3b82f6; --purple: #a855f7; --radius: 12px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg); color: var(--text);
-      height: 100vh; overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
+      font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text);
+      height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden;
       -webkit-app-region: drag;
     }
     .container {
-      -webkit-app-region: no-drag;
-      width: 640px; max-height: 92vh; overflow-y: auto; padding: 40px 48px;
+      -webkit-app-region: no-drag; width: 600px; max-height: 92vh; overflow-y: auto; padding: 40px 48px;
+      scrollbar-width: thin; scrollbar-color: var(--surface2) transparent;
     }
+    .container::-webkit-scrollbar { width: 6px; }
+    .container::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
     .logo {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 28px; font-weight: 700; margin-bottom: 2px;
-      background: linear-gradient(135deg, var(--accent), var(--purple));
+      font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; margin-bottom: 4px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .subtitle {
-      color: var(--text2); font-size: 13px; margin-bottom: 24px;
-      font-family: 'JetBrains Mono', monospace;
-    }
+    .subtitle { color: var(--text2); font-size: 14px; margin-bottom: 32px; font-family: 'JetBrains Mono', monospace; }
     .mode-info {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 24px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 28px;
     }
-    .mode-info h3 {
-      font-size: 12px; color: var(--accent); margin-bottom: 6px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .mode-info p { font-size: 12px; color: var(--text2); line-height: 1.55; }
+    .mode-info h3 { font-size: 13px; color: var(--accent); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+    .mode-info p { font-size: 12px; color: var(--text2); line-height: 1.6; }
     .mode-info strong { color: var(--text); }
-
-    .key-group { margin-bottom: 16px; }
-    .key-header {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    .section-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--text2); margin-bottom: 12px; margin-top: 8px;
     }
-    .key-dot {
-      width: 9px; height: 9px; border-radius: 50%;
-      background: var(--border); transition: background 0.3s;
+    .free-badge {
+      display: inline-block; font-size: 9px; padding: 1px 6px; border-radius: 4px;
+      background: rgba(34,197,94,0.15); color: var(--green); font-family: 'JetBrains Mono', monospace;
+      font-weight: 600; margin-left: 6px;
     }
+    .key-group { margin-bottom: 18px; }
+    .key-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.3s; flex-shrink: 0; }
     .key-dot.active { background: var(--green); }
     .key-dot.error { background: var(--red); }
     .key-label { font-weight: 600; font-size: 13px; }
-    .key-hint {
-      font-size: 11px; color: var(--text2); margin-bottom: 4px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .key-hint a { color: var(--accent); text-decoration: none; cursor: pointer; }
-    .input-row { display: flex; gap: 8px; }
+    .key-color { width: 3px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+    .key-hint { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+    .key-hint a { color: var(--accent); text-decoration: none; }
+    .input-row { display: flex; gap: 6px; }
     input[type="password"], input[type="text"] {
-      flex: 1; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 12px; color: var(--text);
-      font-family: 'JetBrains Mono', monospace; font-size: 12px;
-      outline: none; transition: border-color 0.2s;
+      flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 12px; color: var(--text); font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; outline: none; transition: border-color 0.2s;
     }
     input:focus { border-color: var(--accent); }
-    input::placeholder { color: var(--text2); opacity: 0.45; }
+    input::placeholder { color: var(--text2); opacity: 0.4; }
     .btn-test {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 14px; color: var(--text);
-      cursor: pointer; font-size: 11px; font-weight: 600;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 14px; color: var(--text); cursor: pointer; font-size: 11px; font-weight: 600;
       transition: all 0.2s; white-space: nowrap;
     }
     .btn-test:hover { background: var(--border); }
     .btn-test.success { border-color: var(--green); color: var(--green); }
     .btn-test.fail { border-color: var(--red); color: var(--red); }
-    .test-result {
-      font-size: 10px; margin-top: 3px;
-      font-family: 'JetBrains Mono', monospace; min-height: 14px;
-    }
+    .test-result { font-size: 10px; margin-top: 3px; font-family: 'JetBrains Mono', monospace; min-height: 14px; }
     .test-result.ok { color: var(--green); }
     .test-result.err { color: var(--red); }
     .divider { height: 1px; background: var(--border); margin: 24px 0; opacity: 0.5; }
     .btn-launch {
-      width: 100%; padding: 13px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none; border-radius: 10px; color: white;
-      font-size: 15px; font-weight: 700; cursor: pointer;
-      transition: all 0.2s; font-family: 'Inter', sans-serif;
-      letter-spacing: 0.5px;
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border: none; border-radius: 10px; color: white; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; letter-spacing: 0.5px;
     }
     .btn-launch:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(249,115,22,0.3); }
     .btn-launch:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-    .footer-note {
-      text-align: center; margin-top: 14px; font-size: 11px;
-      color: var(--text2); font-family: 'JetBrains Mono', monospace;
-    }
+    .footer-note { text-align: center; margin-top: 14px; font-size: 10px; color: var(--text2); font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo">SASSY BRAIN</div>
-    <div class="subtitle">multi-provider dev testing tool // api key setup</div>
+    <div class="subtitle">consensus engine // v0.2.0 — 5 providers</div>
 
     <div class="mode-info">
-      <h3>How It Works</h3>
+      <h3>Multi-Provider Consensus</h3>
       <p>
-        Two <strong>slots</strong>, each pickable to any provider. Send a prompt →
-        both slots run in parallel, responses stream side-by-side. Per-slot
-        <strong>JSON overlay</strong> lets you pass any API parameter (temperature,
-        tools, reasoning_effort, etc.) — merged into every request body for the session.
-      </p>
-      <p style="margin-top:6px">
-        Configure at least one provider. <strong>Ollama</strong> works without a key
-        if you have it running locally.
+        Pick any <strong>2+ providers</strong> for consensus mode. They debate, refine, and synthesize the truth.
+        <strong>Free tiers</strong> available from Gemini, Mistral, and HuggingFace — no credit card needed.
       </p>
     </div>
 
-    <div id="key-rows"><!-- populated from provider catalog --></div>
+    <div class="section-label">Paid Providers</div>
+    <div id="paid-providers"></div>
+
+    <div class="section-label">Free Tier Providers <span class="free-badge">FREE</span></div>
+    <div id="free-providers"></div>
+
+    <div class="section-label">Integrations</div>
+    <div class="key-group">
+      <div class="key-header">
+        <div class="key-dot" id="dot-github"></div>
+        <div class="key-color" style="background:#8b5cf6"></div>
+        <span class="key-label">GitHub</span>
+      </div>
+      <div class="key-hint">Get PAT at <a href="#" onclick="openExternal('https://github.com/settings/tokens')">github.com/settings/tokens</a></div>
+      <div class="input-row">
+        <input type="password" id="key-github" placeholder="ghp_..." spellcheck="false" autocomplete="off">
+        <button class="btn-test" id="test-github" onclick="testKey('github')">Test</button>
+      </div>
+      <div class="test-result" id="result-github"></div>
+    </div>
 
     <div class="divider"></div>
-
-    <button class="btn-launch" id="btn-launch" disabled onclick="launch()">
-      Launch Sassy Brain →
-    </button>
-
+    <button class="btn-launch" id="btn-launch" disabled onclick="launch()">Launch Sassy Brain →</button>
     <div class="footer-note">
-      Keys encrypted locally via electron-store. Never transmitted except to each provider's own API.
+      At least one AI key required. 2+ providers enable Consensus Mode.<br>
+      Keys encrypted locally. Never transmitted except to their own API.
     </div>
   </div>
 
   <script>
-    let PROVIDERS = [];
+    function openExternal(url) { window.open(url, '_blank'); }
 
-    function el(tag, attrs, children) {
-      const e = document.createElement(tag);
-      if (attrs) for (const k of Object.keys(attrs)) {
-        if (k === 'className') e.className = attrs[k];
-        else if (k === 'textContent') e.textContent = attrs[k];
-        else if (k.startsWith('on')) e[k] = attrs[k];
-        else e.setAttribute(k, attrs[k]);
-      }
-      if (children) for (const c of children) if (c) e.appendChild(c);
-      return e;
-    }
-
-    function renderKeyRow(p) {
-      const dot = el('div', { className: 'key-dot', id: `dot-${p.id}` });
-      const label = el('span', { className: 'key-label', textContent: p.label });
-      const header = el('div', { className: 'key-header' }, [dot, label]);
-
-      const hint = el('div', { className: 'key-hint' });
-      if (p.keyUrl) {
-        hint.appendChild(document.createTextNode('Get key at '));
-        const a = el('a', { textContent: p.keyUrl.replace(/^https?:\/\//, '') });
-        a.addEventListener('click', () => window.sassy.shell.openExternal(p.keyUrl));
-        hint.appendChild(a);
-      } else {
-        hint.textContent = `Local provider — no key required`;
-      }
-
-      const input = el('input', {
-        type: 'password', id: `key-${p.id}`,
-        placeholder: p.keyHint || '', spellcheck: 'false', autocomplete: 'off'
-      });
-      input.addEventListener('input', checkLaunchReady);
-      const btn = el('button', {
-        className: 'btn-test', id: `test-${p.id}`, textContent: 'Test'
-      });
-      btn.addEventListener('click', () => testKey(p.id));
-      const row = el('div', { className: 'input-row' }, [input, btn]);
-      const result = el('div', { className: 'test-result', id: `result-${p.id}` });
-
-      return el('div', { className: 'key-group' }, [header, hint, row, result]);
-    }
+    const providerOrder = ['anthropic', 'grok', 'gemini', 'mistral', 'huggingface'];
 
     async function init() {
-      PROVIDERS = await window.sassy.providers.list();
-      const host = document.getElementById('key-rows');
+      const providers = await window.sassy.providers.list();
+      const existing = await window.sassy.keys.get();
 
-      const has = await window.sassy.keys.has();
+      const paidContainer = document.getElementById('paid-providers');
+      const freeContainer = document.getElementById('free-providers');
 
-      for (const p of PROVIDERS) {
-        // Skip providers that don't need a key — they're always available.
-        if (!p.needsKey) continue;
-        const row = renderKeyRow(p);
-        host.appendChild(row);
-        if (has[p.id]) {
-          document.getElementById(`key-${p.id}`).placeholder =
-            'key already saved — enter new one to replace';
-          document.getElementById(`dot-${p.id}`).classList.add('active');
+      for (const id of providerOrder) {
+        const p = providers[id];
+        if (!p) continue;
+        const container = p.free ? freeContainer : paidContainer;
+
+        const html = `
+          <div class="key-group">
+            <div class="key-header">
+              <div class="key-dot" id="dot-${id}"></div>
+              <div class="key-color" style="background:${p.color}"></div>
+              <span class="key-label">${p.name}</span>
+              ${p.free ? '<span class="free-badge">FREE</span>' : ''}
+            </div>
+            <div class="key-hint">Get key at <a href="#" onclick="openExternal('${p.keyUrl}')">${p.keyHint}</a></div>
+            <div class="input-row">
+              <input type="password" id="key-${id}" placeholder="${p.keyPrefix}..." spellcheck="false" autocomplete="off">
+              <button class="btn-test" id="test-${id}" onclick="testKey('${id}')">Test</button>
+            </div>
+            <div class="test-result" id="result-${id}"></div>
+          </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+
+        if (existing[id]) {
+          document.getElementById(`key-${id}`).placeholder = existing[id];
+          document.getElementById(`dot-${id}`).classList.add('active');
         }
+
+        document.getElementById(`key-${id}`).addEventListener('input', checkLaunchReady);
+      }
+
+      if (existing.github) {
+        document.getElementById('key-github').placeholder = existing.github;
+        document.getElementById('dot-github').classList.add('active');
       }
       checkLaunchReady();
     }
 
     function checkLaunchReady() {
-      let anyReady = false;
-      for (const p of PROVIDERS) {
-        if (!p.needsKey) { anyReady = true; continue; }
-        const input = document.getElementById(`key-${p.id}`);
-        const dot = document.getElementById(`dot-${p.id}`);
-        if (!input) continue;
-        if (input.value.trim() || (dot && dot.classList.contains('active'))) {
-          anyReady = true;
-        }
-      }
-      document.getElementById('btn-launch').disabled = !anyReady;
+      const hasAny = providerOrder.some(p => {
+        const input = document.getElementById(`key-${p}`);
+        const dot = document.getElementById(`dot-${p}`);
+        return (input && input.value) || (dot && dot.classList.contains('active'));
+      });
+      document.getElementById('btn-launch').disabled = !hasAny;
     }
 
-    async function testKey(providerId) {
-      const input = document.getElementById(`key-${providerId}`);
-      const btn = document.getElementById(`test-${providerId}`);
-      const result = document.getElementById(`result-${providerId}`);
-      const dot = document.getElementById(`dot-${providerId}`);
+    async function testKey(provider) {
+      const input = document.getElementById(`key-${provider}`);
+      const btn = document.getElementById(`test-${provider}`);
+      const result = document.getElementById(`result-${provider}`);
+      const dot = document.getElementById(`dot-${provider}`);
 
       const key = input.value.trim();
-      if (!key) {
-        result.textContent = 'enter a key first';
-        result.className = 'test-result err';
-        return;
-      }
+      if (!key) { result.textContent = 'enter a key first'; result.className = 'test-result err'; return; }
+
       btn.textContent = '...';
       result.textContent = '';
+      await window.sassy.keys.set(provider, key);
 
-      const saveRes = await window.sassy.keys.set(providerId, key);
-      if (saveRes && saveRes.error) {
-        btn.textContent = 'Fail'; btn.className = 'btn-test fail';
-        result.textContent = saveRes.error;
-        result.className = 'test-result err';
-        dot.className = 'key-dot error';
-        return;
-      }
-
-      const res = await window.sassy.ai.complete({
-        provider: providerId,
-        messages: [{ role: 'user', content: 'Say "ok".' }]
-      });
-
-      if (res.error) {
-        btn.textContent = 'Fail'; btn.className = 'btn-test fail';
-        result.textContent = (res.error || '').substring(0, 90);
-        result.className = 'test-result err';
-        dot.className = 'key-dot error';
+      if (provider === 'github') {
+        const res = await window.sassy.github.test();
+        if (res.error) {
+          btn.textContent = 'Fail'; btn.className = 'btn-test fail';
+          result.textContent = res.error; result.className = 'test-result err';
+          dot.className = 'key-dot error';
+        } else {
+          btn.textContent = '✓'; btn.className = 'btn-test success';
+          result.textContent = `authenticated as ${res.login}`; result.className = 'test-result ok';
+          dot.className = 'key-dot active';
+        }
       } else {
-        btn.textContent = '✓'; btn.className = 'btn-test success';
-        result.textContent = `connected — ${(res.text || '').substring(0, 40)}`;
-        result.className = 'test-result ok';
-        dot.className = 'key-dot active';
+        const messages = [{ role: 'user', content: 'Respond with only the word "connected"' }];
+        const res = await window.sassy.ai.complete({ provider, messages });
+        if (res.error) {
+          btn.textContent = 'Fail'; btn.className = 'btn-test fail';
+          result.textContent = res.error.substring(0, 80); result.className = 'test-result err';
+          dot.className = 'key-dot error';
+        } else {
+          btn.textContent = '✓'; btn.className = 'btn-test success';
+          result.textContent = `connected — ${(res.text || '').substring(0, 40)}`; result.className = 'test-result ok';
+          dot.className = 'key-dot active';
+        }
       }
 
-      setTimeout(() => {
-        btn.textContent = 'Test';
-        btn.className = 'btn-test';
-      }, 3000);
+      setTimeout(() => { btn.textContent = 'Test'; btn.className = 'btn-test'; }, 3000);
       checkLaunchReady();
     }
 
     async function launch() {
-      for (const p of PROVIDERS) {
-        if (!p.needsKey) continue;
-        const input = document.getElementById(`key-${p.id}`);
-        if (input && input.value.trim()) {
-          await window.sassy.keys.set(p.id, input.value.trim());
-        }
+      for (const p of [...providerOrder, 'github']) {
+        const el = document.getElementById(`key-${p}`);
+        if (el) { const val = el.value.trim(); if (val) await window.sassy.keys.set(p, val); }
       }
       await window.sassy.nav.toChat();
     }
 
+    document.getElementById('key-github').addEventListener('input', checkLaunchReady);
     init();
   </script>
 </body>

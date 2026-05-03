@@ -1,6 +1,6 @@
 /**
- * Sassy Brain — Preload
- * Secure IPC bridge. Uses only contextBridge + ipcRenderer → works with sandbox:true.
+ * Sassy Brain — Preload (context bridge) v0.2.0
+ * Secure IPC bridge. Uses only contextBridge + ipcRenderer → works with sandbox:true. No node in renderer.
  */
 
 const { contextBridge, ipcRenderer } = require('electron');

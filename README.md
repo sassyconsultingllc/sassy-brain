@@ -1,27 +1,33 @@
+# Sassy Brain v0.2.0
 
-# SASSY BRAIN
+**Multi-AI consensus engine. 5 providers debate, you get truth.**
 
-**Multi-AI Consensus Engine. Claude + Grok debate, you get truth.**
+An Electron desktop app that sends your prompt to multiple AI providers simultaneously, lets them debate and refine their answers, then synthesizes the consensus truth.
 
-Built by [Sassy Consulting LLC](https://sassyconsultingllc.com) · Veteran-owned
+## Providers
 
-Current Version: **0.2.0**
+| Provider | Free Tier | Models |
+|----------|-----------|--------|
+| **Claude** (Anthropic) | No | Sonnet 4, Haiku 4.5, Opus 4.5 |
+| **Grok** (xAI) | No | Grok-3-fast, Grok-3, Grok-3-mini |
+| **Gemini** (Google) | ✅ Yes | Flash 2.0, Flash-Lite, 1.5-Flash |
+| **Mistral** | ✅ Yes | Small, Medium, Nemo |
+| **HuggingFace** | ✅ Yes | Llama 3.3 70B, Mixtral 8x7B, Qwen 72B |
 
-----
+## How It Works
 
-## What Is This?
-
-Sassy Brain is an Electron desktop application that runs your prompts through multiple AI models simultaneously, lets them deliberate, and presents you with a consensus answer. Think of it as adversarial collaboration — the AIs challenge each other's reasoning before you see the result.
+1. **Setup**: Enter API keys (at least 1 required, 2+ for consensus)
+2. **Consensus Mode**: Your prompt goes to all selected providers simultaneously
+3. **Deliberation**: Each reads the others' responses and refines (configurable rounds)
+4. **Synthesis**: Final merged answer presented as unified truth
+5. **Steering**: Redirect mid-stream without losing context
 
 **Architecture inspired by** [Grok-Desktop](https://github.com/AnRkey/Grok-Desktop) (ISC License) with substantial additions for multi-model consensus, async message steering, API-driven chat, and provider-specific features.
 
-
 ## Features
-
 
 ### Consensus Mode ⚡
 Your prompt goes to Claude (Anthropic) and Grok (xAI) simultaneously. They each respond independently, then read each other's answers and refine through configurable debate rounds (default: 2). The final synthesized answer is streamed to you — no attribution to either AI, just the agreed-upon truth.
-
 
 ### System Message Support (NEW)
 You can now provide a system message for Anthropic and Gemini models, giving you more control over the AI's behavior and context.
@@ -46,14 +52,11 @@ Inspired by VS Code's Copilot Chat steering system. While an AI is still generat
 
 Queued messages can be reordered or removed before they fire.
 
-
 ### Single-Provider Mode
 Switch to Claude-only, Grok-only, or any supported provider from the top bar. Full streaming with the same steering capabilities.
 
-
 ### AI Chat History Importer
 Import conversations from ChatGPT, Gemini, Perplexity, Grok, Manus, or other AI systems. Full skill included in `importers/` — supports direct paste, file upload, and API fetch.
-
 
 ### Security
 - API keys encrypted locally via `electron-store` (AES)
@@ -72,15 +75,23 @@ npm install
 npm start
 ```
 
-On first launch, you'll be prompted to enter API keys:
+## Build
 
-| Provider | Required | Get Key |
-|----------|----------|---------|
-| **Anthropic (Claude)** | Yes* | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
-| **xAI (Grok)** | Yes* | [console.x.ai](https://console.x.ai/) |
-| **GitHub** | Optional | [github.com/settings/tokens](https://github.com/settings/tokens) |
+```bash
+npm run build          # Windows installer
+npm run build-portable # Windows portable
+npm run build-linux    # Linux AppImage + deb
+npm run build-all      # All platforms
+```
 
-\* At least one AI key required. Both needed for Consensus Mode.
+## Architecture
+
+- **Main process** (`src/main.js`): API calls, key management, streaming
+- **Renderer** (`src/chat.html`): Single-file UI with consensus engine
+- **Preload** (`src/preload.js`): Secure IPC bridge
+- **Setup** (`src/setup.html`): Dynamic key configuration
+
+Keys encrypted via `electron-store`. All API calls from main process (no CORS, no key exposure in renderer).
 
 
 ## Provider Requirements & Configuration
@@ -119,4 +130,4 @@ See `importers/CONFIGURATION.md` for full API key setup and security best practi
 
 ## License
 
-MIT — Built by Sassy Consulting LLC
+MIT — Built by [Sassy Consulting LLC](https://sassyconsultingllc.com)
