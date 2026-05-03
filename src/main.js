@@ -70,9 +70,15 @@ const PROVIDERS = {
 };
 
 // ── Encrypted config store ──────────────────────────────────────
-const store = new Store({
-  encryptionKey: 'sassy-brain-v2-' + os.hostname(),
-  schema: {
+// clearInvalidConfig: if a prior install left a config encrypted with a
+// different key (or otherwise corrupted), electron-store would JSON.parse
+// the garbage and crash startup. With this flag, conf catches the
+// SyntaxError, wipes the file, and continues with defaults.
+function makeStore() {
+  return new Store({
+    encryptionKey: 'sassy-brain-v2-' + os.hostname(),
+    clearInvalidConfig: true,
+    schema: {
     keys: {
       type: 'object',
       properties: {
@@ -102,8 +108,20 @@ const store = new Store({
       },
       default: {}
     }
-  }
-});
+    }
+  });
+}
+
+let store;
+try {
+  store = makeStore();
+} catch (err) {
+  // Belt and suspenders. clearInvalidConfig already handles SyntaxError,
+  // but if anything else throws (schema mismatch, fs error), fall back to
+  // an empty plaintext store so the app still launches.
+  console.error('Sassy Brain: store init failed, falling back to fresh store:', err);
+  store = new Store({ clearInvalidConfig: true });
+}
 
 // ── GPU acceleration ─────────────────────────────────────────────
 function configureGpuAcceleration() {
