@@ -45,7 +45,8 @@ contextBridge.exposeInMainWorld('sassy', {
     brain: () => ipcRenderer.invoke('mesh:brain'),
     phone: () => ipcRenderer.invoke('mesh:phone'),
     announce: (peer) => ipcRenderer.invoke('mesh:announce', peer),
-    openHome: () => ipcRenderer.invoke('mesh:openHome')
+    openHome: () => ipcRenderer.invoke('mesh:openHome'),
+    locate: () => ipcRenderer.invoke('mesh:locate')
   },
   app: {
     version: () => ipcRenderer.invoke('app:version'),

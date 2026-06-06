@@ -1,6 +1,6 @@
 {
   "name": "sassy-brain",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Multi-AI consensus engine. 5 providers (Claude, Grok, Gemini, Mistral, HuggingFace) debate, you get truth. Now with a SassyMCP coordination mesh — Mesh, Dashboard, Phone, and Actions tabs where your AIs and devices show up as live agents. Built by Sassy Consulting LLC.",
   "main": "src/main.js",
   "scripts": {
@@ -30,6 +30,9 @@
     "appId": "com.sassyconsulting.brain",
     "productName": "Sassy Brain",
     "directories": { "output": "build" },
+    "extraResources": [
+      { "from": "extra/sassymcp", "to": "sassymcp" }
+    ],
     "linux": { "target": ["AppImage", "deb"], "category": "Network", "icon": "build-resources/icons" },
     "win": {
       "target": ["nsis", "portable"],

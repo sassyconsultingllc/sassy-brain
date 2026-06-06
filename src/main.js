@@ -339,52 +339,82 @@ ipcMain.handle('app:version', () => app.getVersion());
 ipcMain.handle('app:platform', () => process.platform);
 
 // ── SassyMCP mesh bridge ────────────────────────────────────────────
-// Sassy Brain (the AIs) talks to the SassyMCP coordination layer (the mesh,
-// phone, brain state) by shelling out to its Python CLIs. Configure via
-// SASSYMCP_PYTHON / SASSYMCP_REPO; sane Windows defaults otherwise.
-function sassyPython() {
-  const env = process.env.SASSYMCP_PYTHON;
-  if (env && fs.existsSync(env)) return env;
-  const guess = path.join('V:', '\\Projects', 'SassyMCP', '.venv', 'Scripts', 'python.exe');
-  return fs.existsSync(guess) ? guess : 'python';
+// Sassy Brain talks to the SassyMCP coordination layer (mesh, phone, brain).
+// Auto-locates SassyMCP so the mesh works standalone, in priority order:
+//   SASSYMCP_EXE -> bundled exe (resources/sassymcp/) -> PATH -> standard
+//   install dirs -> dev python (SASSYMCP_PYTHON/venv, with SASSYMCP_REPO).
+// A bundled/installed exe runs as `sassymcp.exe mesh <cmd>`; a python
+// interpreter as `python -m sassymcp.<module> <cmd>`.
+let _runner = null; // { kind:'exe'|'py', path, repo? } | { path:null } when none
+function _fileMaybe(p) { try { return p && fs.existsSync(p) ? p : null; } catch (_) { return null; } }
+
+// Resolve an executable on PATH without spawning a shell (no injection surface).
+function _onPath(name) {
+  const exts = process.platform === 'win32' ? ['.exe', '.cmd', '.bat'] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const ext of exts) { const hit = _fileMaybe(path.join(dir, name + ext)); if (hit) return hit; }
+  }
+  return null;
 }
-function sassyRepo() {
-  const env = process.env.SASSYMCP_REPO;
-  if (env && fs.existsSync(env)) return env;
-  return 'V:\\Projects\\SassyMCP';
+
+function resolveRunner() {
+  if (_runner !== null) return _runner.path ? _runner : null;
+  const set = (r) => { _runner = r || { path: null }; return r; };
+  let p = _fileMaybe(process.env.SASSYMCP_EXE);
+  if (p) return set({ kind: 'exe', path: p });
+  try { p = _fileMaybe(path.join(process.resourcesPath || '', 'sassymcp', 'sassymcp.exe')); if (p) return set({ kind: 'exe', path: p }); } catch (_) {}
+  p = _onPath('sassymcp');
+  if (p) return set({ kind: 'exe', path: p });
+  for (const dir of [process.env.LOCALAPPDATA, process.env['ProgramFiles'], process.env['ProgramFiles(x86)'], 'C:\\Program Files']) {
+    p = _fileMaybe(dir && path.join(dir, 'SassyMCP', 'sassymcp.exe')); if (p) return set({ kind: 'exe', path: p });
+  }
+  p = _fileMaybe(process.env.SASSYMCP_PYTHON);
+  if (p) return set({ kind: 'py', path: p, repo: _fileMaybe(process.env.SASSYMCP_REPO) || 'V:\\Projects\\SassyMCP' });
+  p = _fileMaybe('V:\\Projects\\SassyMCP\\.venv\\Scripts\\python.exe');
+  if (p) return set({ kind: 'py', path: p, repo: 'V:\\Projects\\SassyMCP' });
+  set(null);
+  return null;
 }
-function runPy(args, timeoutMs = 12000) {
+
+function _meshArgs(runner, cmd, extra) {
+  if (runner.kind === 'exe') return ['mesh', cmd].concat(extra || []);
+  if (cmd === 'brain') return ['-m', 'sassymcp._brain_status'];
+  if (cmd === 'phone') return ['-m', 'sassymcp._phone_status'];
+  return ['-m', 'sassymcp.modules.coordination', cmd].concat(extra || []);
+}
+
+function runMesh(cmd, extra, timeoutMs = 12000) {
+  const runner = resolveRunner();
+  if (!runner) return Promise.resolve({ error: 'SassyMCP not found — install it or set SASSYMCP_EXE to enable the mesh.' });
+  const args = _meshArgs(runner, cmd, extra);
+  const opts = { shell: false };
+  if (runner.kind === 'py' && runner.repo) opts.cwd = runner.repo;
   return new Promise((resolve) => {
     let out = '', err = '', done = false;
-    const finish = (v) => { if (done) return; done = true; clearTimeout(timer); if (v && v.error) console.log(`[mesh] ${args.join(' ')} -> ERR ${v.error}`); resolve(v); };
+    const finish = (v) => { if (done) return; done = true; clearTimeout(timer); if (v && v.error) console.log(`[mesh] ${cmd} -> ERR ${v.error}`); resolve(v); };
     let proc;
-    try {
-      proc = spawn(sassyPython(), args, { cwd: sassyRepo(), shell: false });
-    } catch (e) {
-      return resolve({ error: `cannot launch SassyMCP python: ${e.message}` });
-    }
+    try { proc = spawn(runner.path, args, opts); }
+    catch (e) { return resolve({ error: `cannot launch SassyMCP (${runner.path}): ${e.message}` }); }
     const timer = setTimeout(() => { try { proc.kill(); } catch (_) {} finish({ error: `timed out after ${timeoutMs}ms` }); }, timeoutMs);
     proc.stdout.on('data', (d) => { out += d; });
     proc.stderr.on('data', (d) => { err += d; });
-    proc.on('error', (e) => finish({ error: `spawn failed: ${e.message} (is SassyMCP installed at ${sassyRepo()}?)` }));
-    proc.on('close', (code) => {
-      try { finish(JSON.parse(out)); }
-      catch (e) { finish({ error: `exit ${code}: ${(err || out || 'no output').slice(0, 300)}` }); }
-    });
+    proc.on('error', (e) => finish({ error: `spawn failed: ${e.message}` }));
+    proc.on('close', (code) => { try { finish(JSON.parse(out)); } catch (e) { finish({ error: `exit ${code}: ${(err || out || 'no output').slice(0, 300)}` }); } });
   });
 }
 
-ipcMain.handle('mesh:board', () => runPy(['-m', 'sassymcp.modules.coordination', 'board']));
-ipcMain.handle('mesh:brain', () => runPy(['-m', 'sassymcp._brain_status']));
-ipcMain.handle('mesh:phone', () => runPy(['-m', 'sassymcp._phone_status']));
-ipcMain.handle('mesh:announce', (_, peer = {}) => runPy([
-  '-m', 'sassymcp.modules.coordination', 'announce',
+ipcMain.handle('mesh:board', () => runMesh('board'));
+ipcMain.handle('mesh:brain', () => runMesh('brain'));
+ipcMain.handle('mesh:phone', () => runMesh('phone'));
+ipcMain.handle('mesh:announce', (_, peer = {}) => runMesh('announce', [
   '--id', peer.id || 'sassy-brain',
   '--name', peer.name || 'Sassy Brain',
   '--platform', peer.platform || 'desktop',
   '--caps', peer.caps || 'consensus,chat',
   '--ttl', '600',
 ]));
+ipcMain.handle('mesh:locate', () => { const r = resolveRunner(); return r ? { found: true, kind: r.kind, path: r.path } : { found: false }; });
 ipcMain.handle('mesh:openHome', () => {
   const home = process.env.SASSYMCP_HOME || path.join(os.homedir(), '.sassymcp');
   shell.openPath(home);
