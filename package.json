@@ -24,7 +24,7 @@
     "marked": "^12.0.0"
   },
   "devDependencies": {
-    "electron": "^39.1.2"
+    "electron": "^39.8.5"
   },
   "build": {
     "appId": "com.sassyconsulting.brain",
