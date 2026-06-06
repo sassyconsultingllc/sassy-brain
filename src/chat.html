@@ -160,12 +160,56 @@
 
     .streaming-cursor { display: inline-block; width: 2px; height: 14px; background: var(--accent); animation: blink 0.8s infinite; vertical-align: middle; margin-left: 2px; }
     @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+    /* ── View tabs + panels (Mesh / Dashboard / Phone / Actions) ─── */
+    .view-tabs { -webkit-app-region: no-drag; display: flex; gap: 2px; margin-left: 4px; }
+    .view-tab { padding: 4px 10px; border: none; background: transparent; color: var(--text2); font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; font-family: var(--mono); transition: all .15s; white-space: nowrap; }
+    .view-tab.active { background: var(--surface2); color: var(--accent); }
+    .view-tab:hover:not(.active) { color: var(--text); }
+    .view-panel { flex: 1; overflow-y: auto; padding: 20px 24px; display: none; }
+    .view-panel.active { display: block; }
+    .vp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .vp-title { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+    .vp-refresh { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 3px 9px; font-size: 10px; cursor: pointer; font-family: var(--mono); }
+    .vp-refresh:hover { color: var(--text); }
+    .vp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .vp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+    .vp-card h3 { font-family: var(--mono); font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+    .vp-empty { color: var(--text3); font-size: 12px; padding: 6px 0; }
+    .peer { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .peer-top { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot.g { background: var(--green); } .dot.x { background: var(--text3); }
+    .peer-name { font-weight: 600; font-size: 13px; flex: 1; }
+    .peer-plat { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+    .caps { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 2px; }
+    .cap { font-size: 9px; font-family: var(--mono); background: var(--surface2); color: var(--text2); padding: 1px 6px; border-radius: 10px; }
+    .cap.dim { opacity: .5; }
+    .peer-foot { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+    .stat-v { font-size: 22px; font-weight: 700; color: var(--text); }
+    .stat-v.accent { color: var(--accent); }
+    .stat-s { font-size: 11px; color: var(--text3); }
+    .chrow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 11px; font-family: var(--mono); }
+    .chrow .bar { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .chrow .bar i { display: block; height: 100%; background: var(--accent); }
+    .vp-actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+    .vp-act { display: flex; flex-direction: column; gap: 2px; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; cursor: pointer; color: var(--text); font: inherit; }
+    .vp-act:hover { border-color: var(--accent); }
+    .vp-act b { font-size: 13px; font-weight: 600; }
+    .vp-act span { font-size: 11px; color: var(--text3); }
   </style>
 </head>
 <body>
   <!-- Top bar -->
   <div class="topbar">
     <span class="topbar-logo">SASSY BRAIN</span>
+    <div class="view-tabs" id="view-tabs">
+      <button class="view-tab active" data-view="chat" onclick="switchView('chat')">Chat</button>
+      <button class="view-tab" data-view="mesh" onclick="switchView('mesh')">Mesh</button>
+      <button class="view-tab" data-view="dashboard" onclick="switchView('dashboard')">Dashboard</button>
+      <button class="view-tab" data-view="phone" onclick="switchView('phone')">Phone</button>
+      <button class="view-tab" data-view="actions" onclick="switchView('actions')">Actions</button>
+    </div>
     <div class="topbar-mode" id="mode-bar"></div>
     <span class="topbar-spacer"></span>
     <button class="topbar-btn" onclick="newChat()" title="New Chat">+</button>
@@ -178,6 +222,12 @@
 
   <!-- Chat -->
   <div class="chat-container" id="chat-area"></div>
+
+  <!-- Mesh / Dashboard / Phone / Actions panels -->
+  <div class="view-panel" id="panel-mesh"></div>
+  <div class="view-panel" id="panel-dashboard"></div>
+  <div class="view-panel" id="panel-phone"></div>
+  <div class="view-panel" id="panel-actions"></div>
 
   <!-- Queue -->
   <div class="queue-area" id="queue-area"></div>
@@ -260,7 +310,7 @@ async function init() {
   buildSettings();
   setupListeners();
 
-  addSystemMessage(`Sassy Brain v0.2.0 — ${availableProviders.length} provider${availableProviders.length !== 1 ? 's' : ''} active`);
+  addSystemMessage(`Sassy Brain v0.3.0 — ${availableProviders.length} provider${availableProviders.length !== 1 ? 's' : ''} active`);
 }
 
 function buildModeBar() {
@@ -639,6 +689,143 @@ document.getElementById('input').addEventListener('keydown', (e) => {
 });
 
 init();
+</script>
+
+<script>
+// ── Mesh / Dashboard / Phone / Actions views ───────────────────────
+// Additive layer over the consensus chat. Talks to the SassyMCP coordination
+// layer via window.sassy.mesh (IPC -> python CLIs). The chat above is untouched.
+// Pure DOM construction (textContent only) — no markup injection.
+let currentView = 'chat';
+let viewPollTimer = null;
+
+function h(tag, attrs, kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    const v = attrs[k];
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k === 'onclick') e.onclick = v;
+    else e.setAttribute(k, v);
+  }
+  if (kids) for (const c of [].concat(kids)) { if (c == null) continue; e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); }
+  return e;
+}
+function _ago(sec) { if (sec == null || !isFinite(sec)) return '—'; if (sec < 60) return Math.round(sec) + 's'; if (sec < 3600) return Math.round(sec / 60) + 'm'; if (sec < 86400) return Math.round(sec / 3600) + 'h'; return Math.round(sec / 86400) + 'd'; }
+function vpHead(title, onRefresh) { const k = [h('span', { class: 'vp-title', text: title })]; if (onRefresh) k.push(h('button', { class: 'vp-refresh', text: '↻ refresh', onclick: onRefresh })); return h('div', { class: 'vp-head' }, k); }
+function card(title, kids) { return h('div', { class: 'vp-card' }, [h('h3', { text: title })].concat(kids)); }
+function empty(t) { return h('div', { class: 'vp-empty', text: t }); }
+
+function switchView(name) {
+  currentView = name;
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  const chat = name === 'chat';
+  document.getElementById('mode-bar').style.display = chat ? '' : 'none';
+  document.getElementById('status-bar').style.display = chat ? '' : 'none';
+  document.getElementById('chat-area').style.display = chat ? '' : 'none';
+  document.getElementById('queue-area').style.display = chat ? '' : 'none';
+  document.querySelector('.input-area').style.display = chat ? '' : 'none';
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  if (viewPollTimer) { clearInterval(viewPollTimer); viewPollTimer = null; }
+  if (chat) return;
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'mesh') { loadMesh(); viewPollTimer = setInterval(loadMesh, 4000); }
+  else if (name === 'dashboard') { loadDashboard(); }
+  else if (name === 'phone') { loadPhone(); viewPollTimer = setInterval(loadPhone, 15000); }
+  else if (name === 'actions') { loadActions(); }
+}
+
+function peerNode(p) {
+  const caps = p.capabilities || [];
+  const capWrap = h('div', { class: 'caps' }, caps.length ? caps.map(c => h('span', { class: 'cap', text: c })) : [h('span', { class: 'cap dim', text: 'no caps' })]);
+  return h('div', { class: 'peer' }, [
+    h('div', { class: 'peer-top' }, [h('span', { class: 'dot ' + (p.alive ? 'g' : 'x') }), h('span', { class: 'peer-name', text: p.name || p.peer_id }), h('span', { class: 'peer-plat', text: p.platform || '?' })]),
+    capWrap,
+    h('div', { class: 'peer-foot', text: _ago(p.age_seconds) + ' ago' })
+  ]);
+}
+function channelRow(c, max) {
+  const i = h('i'); i.style.width = ((c.count / max) * 100) + '%';
+  return h('div', { class: 'chrow' }, [h('span', { style: 'flex:0 0 120px', text: c.channel }), h('span', { class: 'bar' }, [i]), h('span', { text: String(c.count) })]);
+}
+function handoffRow(hd) {
+  return h('div', { class: 'chrow' }, [h('b', { text: hd.from || '?' }), ' → ', h('b', { text: hd.to || 'any' }), h('span', { style: 'color:var(--text2);flex:1', text: ' ' + (hd.task || '') }), h('span', { style: 'color:var(--text3)', text: (hd.channel || '') + ' · ' + _ago(hd.age_seconds) })]);
+}
+function statCard(l, v, s, accent) { return h('div', { class: 'vp-card' }, [h('h3', { text: l }), h('div', { class: 'stat-v' + (accent ? ' accent' : ''), text: String(v) }), h('div', { class: 'stat-s', text: s || '' })]); }
+function actBtn(title, sub, onclick) { return h('button', { class: 'vp-act', onclick }, [h('b', { text: title }), h('span', { text: sub })]); }
+
+async function loadMesh() {
+  const el = document.getElementById('panel-mesh'); el.replaceChildren();
+  const b = await window.sassy.mesh.board();
+  if (b.error) { el.appendChild(vpHead('Mesh', loadMesh)); el.appendChild(card('Coordination', [empty(b.error)])); return; }
+  const peers = b.peers || [], alive = peers.filter(p => p.alive).length;
+  const chans = b.channels || [], max = Math.max(1, ...chans.map(c => c.count));
+  const hs = b.handoffs || [];
+  el.appendChild(vpHead('⚡ ' + alive + ' agent' + (alive === 1 ? '' : 's') + ' live · coordination mesh', loadMesh));
+  el.appendChild(h('div', { class: 'vp-grid' }, [
+    card('Agents', peers.length ? peers.map(peerNode) : [empty('No agents yet. Actions → Announce.')]),
+    card('Channels', chans.length ? chans.map(c => channelRow(c, max)) : [empty('none')])
+  ]));
+  const tl = card('Handoff timeline', hs.length ? hs.map(handoffRow) : [empty('no handoffs yet')]);
+  tl.style.marginTop = '12px';
+  el.appendChild(tl);
+}
+
+async function loadDashboard() {
+  const el = document.getElementById('panel-dashboard'); el.replaceChildren();
+  const b = await window.sassy.mesh.brain();
+  if (b.error) { el.appendChild(vpHead('Brain', loadDashboard)); el.appendChild(card('Brain state', [empty(b.error)])); return; }
+  const tier = (b.tier || 'free').toUpperCase() + (b.addons && b.addons.length ? ' + ' + b.addons.join(', ') : '');
+  el.appendChild(vpHead('Brain state', loadDashboard));
+  el.appendChild(h('div', { class: 'vp-grid' }, [
+    statCard('License tier', tier, b.license_valid ? (b.email || 'valid') : 'free', true),
+    statCard('Memory entries', b.memory_count || 0, (b.milestones || 0) + ' milestones'),
+    statCard('Audit log', b.audit_count || 0, 'tool calls recorded'),
+    statCard('Persona', b.persona ? 'configured' : 'not set', b.persona ? 'loaded each session' : 'run setup'),
+    statCard('Tool groups', (b.allowed_group_count || 0) + '/' + (b.group_count || 0), (b.module_allowed || 0) + '/' + (b.module_total || 0) + ' modules'),
+    statCard('Version', 'v' + (b.version || '?'), b.home || '')
+  ]));
+}
+
+async function loadPhone() {
+  const el = document.getElementById('panel-phone'); el.replaceChildren();
+  const b = await window.sassy.mesh.phone();
+  const devices = (b && b.devices) || [];
+  el.appendChild(vpHead(devices.length ? ('📱 ' + devices.length + ' device' + (devices.length === 1 ? '' : 's')) : 'Phone', loadPhone));
+  if (!devices.length) { el.appendChild(card('Phone', [empty((b && b.error) ? b.error : 'No device connected. Plug in an Android with USB debugging enabled.')])); return; }
+  el.appendChild(card('Connected', devices.map(d => h('div', { class: 'peer' }, [
+    h('div', { class: 'peer-top' }, [h('span', { class: 'dot ' + (d.state === 'device' ? 'g' : 'x') }), h('span', { class: 'peer-name', text: d.model || d.serial }), h('span', { class: 'peer-plat', text: d.state || '' })]),
+    h('div', { class: 'peer-foot', text: d.serial })
+  ]))));
+}
+
+function loadActions() {
+  const el = document.getElementById('panel-actions'); el.replaceChildren();
+  el.appendChild(vpHead('Actions'));
+  el.appendChild(h('div', { class: 'vp-actions' }, [
+    actBtn('📣 Announce to mesh', 'register Sassy Brain + its active AIs as peers', doAnnounce),
+    actBtn('📱 Scan for phone', 'find connected Android devices', () => switchView('phone')),
+    actBtn('📂 Open ~/.sassymcp', 'the brain on disk (File Explorer)', () => window.sassy.mesh.openHome()),
+    actBtn('↻ Refresh mesh', 'reload agents, channels, handoffs', () => switchView('mesh'))
+  ]));
+}
+
+// "Talk together": register Sassy Brain and each key'd AI provider as peers so
+// the consensus participants appear as coordinating agents in the mesh.
+async function meshInit() {
+  try {
+    await window.sassy.mesh.announce({ id: 'sassy-brain', name: 'Sassy Brain', platform: 'desktop', caps: 'consensus,chat' });
+    const has = await window.sassy.keys.has();
+    const provs = await window.sassy.providers.list();
+    for (const id of Object.keys(provs)) {
+      if (has[id]) await window.sassy.mesh.announce({ id: 'ai-' + id, name: provs[id].name, platform: 'cloud-ai', caps: 'chat,consensus' });
+    }
+  } catch (e) { /* mesh optional — chat works without SassyMCP present */ }
+}
+async function doAnnounce() { await meshInit(); switchView('mesh'); }
+
+meshInit();
 </script>
 </body>
 </html>

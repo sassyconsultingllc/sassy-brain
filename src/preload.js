@@ -40,6 +40,13 @@ contextBridge.exposeInMainWorld('sassy', {
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
   },
+  mesh: {
+    board: () => ipcRenderer.invoke('mesh:board'),
+    brain: () => ipcRenderer.invoke('mesh:brain'),
+    phone: () => ipcRenderer.invoke('mesh:phone'),
+    announce: (peer) => ipcRenderer.invoke('mesh:announce', peer),
+    openHome: () => ipcRenderer.invoke('mesh:openHome')
+  },
   app: {
     version: () => ipcRenderer.invoke('app:version'),
     platform: () => ipcRenderer.invoke('app:platform')

@@ -13,6 +13,7 @@ const { app, BrowserWindow, shell, Menu, ipcMain, nativeTheme, session, dialog }
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 const Store = require('electron-store');
 
 // ── Provider Definitions ─────────────────────────────────────────
@@ -160,6 +161,8 @@ let mainWindow;
 function createWindow() {
   const keys = store.get('keys', {});
   const hasAnyKey = Object.keys(PROVIDERS).some(p => keys[p]);
+  const forceChat = process.env.SASSY_FORCE_CHAT === '1';
+  console.log(`[brain] hasAnyKey=${hasAnyKey} forceChat=${forceChat} -> loading ${(hasAnyKey || forceChat) ? 'chat.html' : 'setup.html'}`);
 
   mainWindow = new BrowserWindow({
     width: 1400, height: 900, minWidth: 900, minHeight: 650,
@@ -172,7 +175,7 @@ function createWindow() {
   });
 
   Menu.setApplicationMenu(null);
-  mainWindow.loadFile(path.join(__dirname, hasAnyKey ? 'chat.html' : 'setup.html'));
+  mainWindow.loadFile(path.join(__dirname, (hasAnyKey || forceChat) ? 'chat.html' : 'setup.html'));
 
   const sendTheme = () => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('theme-updated', nativeTheme.shouldUseDarkColors ? 'dark' : 'light');
@@ -334,3 +337,56 @@ ipcMain.handle('github:test', async () => {
 // ── IPC: App info ───────────────────────────────────────────────────
 ipcMain.handle('app:version', () => app.getVersion());
 ipcMain.handle('app:platform', () => process.platform);
+
+// ── SassyMCP mesh bridge ────────────────────────────────────────────
+// Sassy Brain (the AIs) talks to the SassyMCP coordination layer (the mesh,
+// phone, brain state) by shelling out to its Python CLIs. Configure via
+// SASSYMCP_PYTHON / SASSYMCP_REPO; sane Windows defaults otherwise.
+function sassyPython() {
+  const env = process.env.SASSYMCP_PYTHON;
+  if (env && fs.existsSync(env)) return env;
+  const guess = path.join('V:', '\\Projects', 'SassyMCP', '.venv', 'Scripts', 'python.exe');
+  return fs.existsSync(guess) ? guess : 'python';
+}
+function sassyRepo() {
+  const env = process.env.SASSYMCP_REPO;
+  if (env && fs.existsSync(env)) return env;
+  return 'V:\\Projects\\SassyMCP';
+}
+function runPy(args, timeoutMs = 12000) {
+  return new Promise((resolve) => {
+    let out = '', err = '', done = false;
+    const finish = (v) => { if (done) return; done = true; clearTimeout(timer); if (v && v.error) console.log(`[mesh] ${args.join(' ')} -> ERR ${v.error}`); resolve(v); };
+    let proc;
+    try {
+      proc = spawn(sassyPython(), args, { cwd: sassyRepo(), shell: false });
+    } catch (e) {
+      return resolve({ error: `cannot launch SassyMCP python: ${e.message}` });
+    }
+    const timer = setTimeout(() => { try { proc.kill(); } catch (_) {} finish({ error: `timed out after ${timeoutMs}ms` }); }, timeoutMs);
+    proc.stdout.on('data', (d) => { out += d; });
+    proc.stderr.on('data', (d) => { err += d; });
+    proc.on('error', (e) => finish({ error: `spawn failed: ${e.message} (is SassyMCP installed at ${sassyRepo()}?)` }));
+    proc.on('close', (code) => {
+      try { finish(JSON.parse(out)); }
+      catch (e) { finish({ error: `exit ${code}: ${(err || out || 'no output').slice(0, 300)}` }); }
+    });
+  });
+}
+
+ipcMain.handle('mesh:board', () => runPy(['-m', 'sassymcp.modules.coordination', 'board']));
+ipcMain.handle('mesh:brain', () => runPy(['-m', 'sassymcp._brain_status']));
+ipcMain.handle('mesh:phone', () => runPy(['-m', 'sassymcp._phone_status']));
+ipcMain.handle('mesh:announce', (_, peer = {}) => runPy([
+  '-m', 'sassymcp.modules.coordination', 'announce',
+  '--id', peer.id || 'sassy-brain',
+  '--name', peer.name || 'Sassy Brain',
+  '--platform', peer.platform || 'desktop',
+  '--caps', peer.caps || 'consensus,chat',
+  '--ttl', '600',
+]));
+ipcMain.handle('mesh:openHome', () => {
+  const home = process.env.SASSYMCP_HOME || path.join(os.homedir(), '.sassymcp');
+  shell.openPath(home);
+  return { ok: true, home };
+});
